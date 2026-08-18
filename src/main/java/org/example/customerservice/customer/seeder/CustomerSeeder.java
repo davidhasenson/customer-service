@@ -1,6 +1,7 @@
 package org.example.customerservice.customer.seeder;
 
-import org.example.pensionatapp.pensionat.customer.model.Customer;
+
+import org.example.customerservice.customer.model.Customer;
 import org.example.customerservice.customer.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
