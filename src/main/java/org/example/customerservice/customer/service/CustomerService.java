@@ -157,6 +157,7 @@ public class CustomerService {
         }
     }
 
+
     private void unlinkPastBookings(Long customerId) {
         try {
             restTemplate.exchange(
