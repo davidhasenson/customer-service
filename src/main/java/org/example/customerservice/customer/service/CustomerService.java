@@ -10,6 +10,7 @@ import org.example.customerservice.error.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ public class CustomerService {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
     private final CustomerRepository customerRepository;
+
+    RestTemplate restTemplate = new RestTemplate();
 
     public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
@@ -122,50 +125,59 @@ public class CustomerService {
                     return new NotFoundException("Kunden hittades inte");
                 });
 
-        boolean hasActiveBooking = bookingRepository.existsByCustomerIdAndEndDateAfterAndStatus(id, LocalDate.now(),BookingStatus.ACTIVE);
+        boolean hasActiveBooking = restTemplate.getForObject("http://localhost:8080/api/bookings/active-bookings/" + id, boolean.class);
+
+
+        //    boolean hasActiveBooking = bookingRepository.existsByCustomerIdAndEndDateAfterAndStatus(id, LocalDate.now(),BookingStatus.ACTIVE);
         if (hasActiveBooking) {
             logger.warn("Delete failed: Customer with ID {} has active bookings", id);
             throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
         }
 
         logger.info("Unlinking past bookings for customer ID: {}", id);
-        for (Booking booking : bookingRepository.findByCustomerId(id)) {
-            booking.setCustomer(null);
-            bookingRepository.save(booking);
+        boolean unlinkBookings = restTemplate.getForObject("http://localhost:8080/api/bookings/unlink-bookings/" + id, boolean.class);
+//        for (Booking booking : bookingRepository.findByCustomerId(id)) {
+//            booking.setCustomer(null);
+//            bookingRepository.save(booking);
+//        }
+
+        if (unlinkBookings = false) {
+           logger.warn("Unlinking past bookings for customer ID failed: {}", id);
+           throw new IllegalStateException("kunde inte ta bort läkar");
         }
 
         customerRepository.delete(customer);
         logger.info("Customer with ID {} was successfully deleted", id);
     }
 
-    @Transactional
-    public void deleteCustomerByEmail(String email) {
-        logger.info("Attempting to delete customer with email: {}", email);
-
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    logger.warn("Delete failed: Customer with email {} not found", email);
-                    return new NotFoundException("Kunden hittades inte");
-                });
-
-        Long customerId = customer.getId();
-
-
-        boolean hasActiveBooking = bookingRepository.existsByCustomerIdAndEndDateAfterAndStatus(customerId, LocalDate.now(), BookingStatus.ACTIVE);
-        if (hasActiveBooking) {
-            logger.warn("Delete failed: Customer with email {} (ID {}) has active bookings", email, customerId);
-            throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
-        }
-
-        logger.info("Unlinking past bookings for customer email: {} (ID {})", email, customerId);
-        for (Booking booking : bookingRepository.findByCustomerId(customerId)) {
-            booking.setCustomer(null);
-            bookingRepository.save(booking);
-        }
-
-        customerRepository.delete(customer);
-        logger.info("Customer with email {} was successfully deleted", email);
-    }
+//    @Transactional
+//    public void deleteCustomerByEmail(String email) {
+//        logger.info("Attempting to delete customer with email: {}", email);
+//
+//        Customer customer = customerRepository.findByEmail(email)
+//                .orElseThrow(() -> {
+//                    logger.warn("Delete failed: Customer with email {} not found", email);
+//                    return new NotFoundException("Kunden hittades inte");
+//                });
+//
+//        Long customerId = customer.getId();
+//
+//
+//        boolean hasActiveBooking = bookingRepository.existsByCustomerIdAndEndDateAfterAndStatus(customerId, LocalDate.now(), BookingStatus.ACTIVE);
+//        if (hasActiveBooking) {
+//            logger.warn("Delete failed: Customer with email {} (ID {}) has active bookings", email, customerId);
+//            throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
+//        }
+//
+//        logger.info("Unlinking past bookings for customer email: {} (ID {})", email, customerId);
+//        for (Booking booking : bookingRepository.findByCustomerId(customerId)) {
+//            booking.setCustomer(null);
+//            bookingRepository.save(booking);
+//        }
+//
+//        customerRepository.delete(customer);
+//        logger.info("Customer with email {} was successfully deleted", email);
+//    }
 
     private CustomerResponse convertToCustomerResponse(Customer customer) {
         return new CustomerResponse(
