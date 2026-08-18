@@ -1,15 +1,12 @@
 package org.example.customerservice.customer.service;
 
 import jakarta.transaction.Transactional;
-import org.example.pensionatapp.pensionat.booking.enumeration.BookingStatus;
-import org.example.pensionatapp.pensionat.booking.model.Booking;
-import org.example.pensionatapp.pensionat.booking.repository.BookingRepository;
-import org.example.pensionatapp.pensionat.customer.model.dto.CreateCustomerRequest;
-import org.example.pensionatapp.pensionat.customer.model.Customer;
-import org.example.pensionatapp.pensionat.customer.model.dto.CustomerResponse;
-import org.example.pensionatapp.pensionat.customer.model.dto.UpdateCustomerRequest;
+import org.example.customerservice.customer.model.dto.CreateCustomerRequest;
+import org.example.customerservice.customer.model.Customer;
+import org.example.customerservice.customer.model.dto.CustomerResponse;
+import org.example.customerservice.customer.model.dto.UpdateCustomerRequest;
 import org.example.customerservice.customer.repository.CustomerRepository;
-import org.example.pensionatapp.pensionat.error.NotFoundException;
+import org.example.customerservice.error.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,11 +20,9 @@ public class CustomerService {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
     private final CustomerRepository customerRepository;
-    private final BookingRepository bookingRepository;
 
-    public CustomerService(CustomerRepository customerRepository, BookingRepository bookingRepository) {
+    public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
-        this.bookingRepository = bookingRepository;
     }
 
     public List<CustomerResponse> getAllCustomers() {
