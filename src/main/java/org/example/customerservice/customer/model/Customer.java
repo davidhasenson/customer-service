@@ -3,10 +3,6 @@ package org.example.customerservice.customer.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.example.pensionatapp.pensionat.booking.model.Booking;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 public class Customer {
