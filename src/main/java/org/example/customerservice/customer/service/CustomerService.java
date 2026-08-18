@@ -9,10 +9,14 @@ import org.example.customerservice.customer.repository.CustomerRepository;
 import org.example.customerservice.error.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
-import java.time.LocalDate;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,9 +24,12 @@ import java.util.List;
 public class CustomerService {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
-    private final CustomerRepository customerRepository;
 
+    private final CustomerRepository customerRepository;
     RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${booking.service.url}")
+    private String bookingServiceUrl;
 
     public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
@@ -125,29 +132,43 @@ public class CustomerService {
                     return new NotFoundException("Kunden hittades inte");
                 });
 
-        boolean hasActiveBooking = restTemplate.getForObject("http://localhost:8080/api/bookings/active-bookings/" + id, boolean.class);
+        checkActiveBookings(id);
 
-
-        //    boolean hasActiveBooking = bookingRepository.existsByCustomerIdAndEndDateAfterAndStatus(id, LocalDate.now(),BookingStatus.ACTIVE);
-        if (hasActiveBooking) {
-            logger.warn("Delete failed: Customer with ID {} has active bookings", id);
-            throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
-        }
-
-        logger.info("Unlinking past bookings for customer ID: {}", id);
-        boolean unlinkBookings = restTemplate.getForObject("http://localhost:8080/api/bookings/unlink-bookings/" + id, boolean.class);
-//        for (Booking booking : bookingRepository.findByCustomerId(id)) {
-//            booking.setCustomer(null);
-//            bookingRepository.save(booking);
-//        }
-
-        if (unlinkBookings = false) {
-           logger.warn("Unlinking past bookings for customer ID failed: {}", id);
-           throw new IllegalStateException("kunde inte ta bort läkar");
-        }
+        unlinkPastBookings(id);
 
         customerRepository.delete(customer);
         logger.info("Customer with ID {} was successfully deleted", id);
+    }
+
+    private void checkActiveBookings(Long customerId) {
+        try {
+            Boolean hasActiveBooking = restTemplate.getForObject(
+                    bookingServiceUrl + "/api/bookings/active-bookings/" + customerId,
+                    Boolean.class
+            );
+
+            if (Boolean.TRUE.equals(hasActiveBooking)) {
+                logger.warn("Delete failed: Customer with ID {} has active bookings", customerId);
+                throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
+            }
+        } catch (RestClientException e) {
+            logger.error("Error communicating with Booking service while checking active bookings for ID {}", customerId, e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte kommunicera med bokningstjänsten");
+        }
+    }
+
+    private void unlinkPastBookings(Long customerId) {
+        try {
+            restTemplate.exchange(
+                    bookingServiceUrl + "/api/bookings/unlink-bookings/" + customerId,
+                    HttpMethod.PUT,
+                    HttpEntity.EMPTY,
+                    Void.class
+            );
+        } catch (RestClientException e) {
+            logger.error("Error communicating with Booking service while unlinking bookings for ID {}", customerId, e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte avkoppla bokningar hos bokningstjänsten");
+        }
     }
 
 //    @Transactional
