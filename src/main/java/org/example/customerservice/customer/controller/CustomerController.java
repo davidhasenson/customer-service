@@ -1,10 +1,11 @@
 package org.example.customerservice.customer.controller;
 
 import jakarta.validation.Valid;
-import org.example.pensionatapp.pensionat.customer.model.dto.CreateCustomerRequest;
-import org.example.pensionatapp.pensionat.customer.model.dto.CustomerResponse;
-import org.example.pensionatapp.pensionat.customer.model.dto.UpdateCustomerRequest;
-import org.example.pensionatapp.pensionat.customer.service.CustomerService;
+
+import org.example.customerservice.customer.model.dto.CreateCustomerRequest;
+import org.example.customerservice.customer.model.dto.CustomerResponse;
+import org.example.customerservice.customer.model.dto.UpdateCustomerRequest;
+import org.example.customerservice.customer.service.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
