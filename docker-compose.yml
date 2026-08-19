@@ -1,0 +1,6 @@
+services:
+
+  customer-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
