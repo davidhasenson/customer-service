@@ -1,0 +1,14 @@
+services:
+
+  customer-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: customer-db
+
+  customer-service:
+    build: .
+    ports:
+      - "8081:8081"
+    depends_on:
+      - "customer-db"
