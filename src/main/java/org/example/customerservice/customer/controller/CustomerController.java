@@ -81,5 +81,5 @@ public class CustomerController {
         logger.info("Received HTTP DELETE request to delete customer with email: {}", email);
         customerService.deleteCustomerByEmail(email);
         return ResponseEntity.noContent().build();
-   }
+    }
 }

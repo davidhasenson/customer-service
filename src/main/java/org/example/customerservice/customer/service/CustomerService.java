@@ -9,8 +9,14 @@ import org.example.customerservice.customer.repository.CustomerRepository;
 import org.example.customerservice.error.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,12 +24,15 @@ import java.util.List;
 public class CustomerService {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
-    private final CustomerRepository customerRepository;
-    private final BookingServiceClient bookingServiceClient;
 
-    public CustomerService(CustomerRepository customerRepository, BookingServiceClient bookingServiceClient) {
+    private final CustomerRepository customerRepository;
+    RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${booking.service.url}")
+    private String bookingServiceUrl;
+
+    public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
-        this.bookingServiceClient = bookingServiceClient;
     }
 
     public List<CustomerResponse> getAllCustomers() {
@@ -123,14 +132,44 @@ public class CustomerService {
                     return new NotFoundException("Kunden hittades inte");
                 });
 
-        boolean hasActiveBooking = bookingServiceClient.hasActiveBookings(id);
-        if (hasActiveBooking) {
-            logger.warn("Delete failed: Customer with ID {} has active bookings", id);
-            throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
-        }
+        checkActiveBookings(id);
+
+        unlinkPastBookings(id);
 
         customerRepository.delete(customer);
         logger.info("Customer with ID {} was successfully deleted", id);
+    }
+
+    private void checkActiveBookings(Long customerId) {
+        try {
+            Boolean hasActiveBooking = restTemplate.getForObject(
+                    bookingServiceUrl + "/api/bookings/active-bookings/" + customerId,
+                    Boolean.class
+            );
+
+            if (Boolean.TRUE.equals(hasActiveBooking)) {
+                logger.warn("Delete failed: Customer with ID {} has active bookings", customerId);
+                throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
+            }
+        } catch (RestClientException e) {
+            logger.error("Error communicating with Booking service while checking active bookings for ID {}", customerId, e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte kommunicera med bokningstjänsten");
+        }
+    }
+
+
+    private void unlinkPastBookings(Long customerId) {
+        try {
+            restTemplate.exchange(
+                    bookingServiceUrl + "/api/bookings/unlink-bookings/" + customerId,
+                    HttpMethod.PUT,
+                    HttpEntity.EMPTY,
+                    Void.class
+            );
+        } catch (RestClientException e) {
+            logger.error("Error communicating with Booking service while unlinking bookings for ID {}", customerId, e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte avkoppla bokningar hos bokningstjänsten");
+        }
     }
 
     @Transactional
@@ -146,11 +185,10 @@ public class CustomerService {
         Long customerId = customer.getId();
 
 
-        boolean hasActiveBooking = bookingServiceClient.hasActiveBookings(customerId);
-        if (hasActiveBooking) {
-            logger.warn("Delete failed: Customer with email {} (ID {}) has active bookings", email, customerId);
-            throw new IllegalStateException("Kunden har aktiva bokningar som måste avbokas innan den kan tas bort");
-        }
+        checkActiveBookings(customerId);
+
+        unlinkPastBookings(customerId);
+
         customerRepository.delete(customer);
         logger.info("Customer with email {} was successfully deleted", email);
     }
