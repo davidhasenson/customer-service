@@ -69,17 +69,17 @@ public class CustomerController {
         return ResponseEntity.ok(updated);
     }
 
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteCustomerById(@PathVariable Long id) {
-//        logger.info("Received HTTP DELETE request to delete customer with ID: {}", id);
-//        customerService.deleteCustomerById(id);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomerById(@PathVariable Long id) {
+        logger.info("Received HTTP DELETE request to delete customer with ID: {}", id);
+        customerService.deleteCustomerById(id);
+        return ResponseEntity.noContent().build();
+    }
 
-//    @DeleteMapping("/email/{email}")
-//    public ResponseEntity<?> deleteCustomerByEmail(@PathVariable String email) {
-//        logger.info("Received HTTP DELETE request to delete customer with email: {}", email);
-//        customerService.deleteCustomerByEmail(email);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/email/{email}")
+    public ResponseEntity<?> deleteCustomerByEmail(@PathVariable String email) {
+        logger.info("Received HTTP DELETE request to delete customer with email: {}", email);
+        customerService.deleteCustomerByEmail(email);
+        return ResponseEntity.noContent().build();
+    }
 }
