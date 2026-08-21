@@ -162,7 +162,7 @@ public class CustomerService {
         try {
             restTemplate.exchange(
                     bookingServiceUrl + "/api/bookings/unlink-bookings/" + customerId,
-                    HttpMethod.PUT,
+                    HttpMethod.PATCH,
                     HttpEntity.EMPTY,
                     Void.class
             );
