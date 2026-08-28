@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class CustomerService {
             throw new IllegalStateException("E-postadressen är redan registrerad!");
         }
 
-        Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone());
+        Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone(), request.username(), request.password());
         Customer savedCustomer = customerRepository.save(customer);
         logger.info("Customer successfully created with ID: {}", savedCustomer.getId());
         return convertToCustomerResponse(savedCustomer);

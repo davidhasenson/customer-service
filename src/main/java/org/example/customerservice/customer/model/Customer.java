@@ -26,17 +26,36 @@ public class Customer {
 
     private String phone;
 
+    @Column(nullable = false, unique = true)
+    @NotBlank(message = "Användarnamn måste anges")
+    private String username;
+
+    @NotBlank(message = "Lösenord måste anges")
+    private String password;
+
     public Customer() {
     }
 
-    public Customer(String firstName, String lastName, String email, String phone) {
+    public Customer(String firstName, String lastName, String email, String phone, String username, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.phone = phone;
+        this.username = username;
+        this.password = password;
     }
 
-    public long getId() {
+    public Customer(Long id, String firstName, String lastName, String email, String phone, String username, String password) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.username = username;
+        this.password = password;
+    }
+
+    public Long getId() {
         return id;
     }
 
@@ -74,5 +93,21 @@ public class Customer {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
