@@ -16,10 +16,10 @@ public record CreateCustomerRequest(
 
         String phone,
 
-        @NotBlank
+        @NotBlank(message = "Användarnamn får inte vara tomt")
         String username,
 
-        @NotBlank
+        @NotBlank(message = "Lösenord får inte vara tomt")
         String password
 ) {
 }
