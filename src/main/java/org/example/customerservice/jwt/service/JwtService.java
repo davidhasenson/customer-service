@@ -12,7 +12,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt_secret}")
     String SECRET;
 
     //15 minutes is equal to 900 000 milliseconds.
