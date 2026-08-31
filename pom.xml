@@ -78,6 +78,8 @@
             <version>3.0.0</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-restclient</artifactId>
         </dependency>
@@ -104,7 +106,6 @@
             <scope>runtime</scope>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

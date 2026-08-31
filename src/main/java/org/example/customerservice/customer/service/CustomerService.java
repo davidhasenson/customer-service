@@ -15,8 +15,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -33,7 +32,7 @@ public class CustomerService {
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
 
     private final CustomerRepository customerRepository;
-    RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 
     @Value("${booking.service.url}")
     private String bookingServiceUrl;
@@ -168,20 +167,20 @@ public class CustomerService {
     }
 
 
-    private void unlinkPastBookings(Long customerId) {
-        try {
-            HttpEntity<Void> entity = createAuthEntity();
-            restTemplate.exchange(
-                    bookingServiceUrl + "/api/bookings/unlink-bookings/" + customerId,
-                    HttpMethod.POST,
-                    entity,
-                    Void.class
-            );
-        } catch (RestClientException e) {
-            logger.error("Error communicating with Booking service while unlinking bookings for ID {}", customerId, e);
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte avkoppla bokningar hos bokningstjänsten");
-        }
+private void unlinkPastBookings(Long customerId) {
+    try {
+        HttpEntity<Void> entity = createAuthEntity();
+        restTemplate.exchange(
+                bookingServiceUrl + "/api/bookings/unlink-bookings/" + customerId,
+                HttpMethod.PATCH,
+                entity,
+                Void.class
+        );
+    } catch (RestClientException e) {
+        logger.error("Error communicating with Booking service while unlinking bookings for ID {}", customerId, e);
+        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte avkoppla bokningar hos bokningstjänsten");
     }
+}
 
     @Transactional
     public void deleteCustomerByEmail(String email) {
