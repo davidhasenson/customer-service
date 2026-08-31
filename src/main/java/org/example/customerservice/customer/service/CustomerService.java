@@ -1,5 +1,6 @@
 package org.example.customerservice.customer.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.example.customerservice.customer.model.dto.CreateCustomerRequest;
 import org.example.customerservice.customer.model.Customer;
@@ -11,12 +12,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +86,7 @@ public class CustomerService {
             throw new IllegalStateException("E-postadressen är redan registrerad!");
         }
 
-        Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone());
+        Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone(), request.username(), request.password());
         Customer savedCustomer = customerRepository.save(customer);
         logger.info("Customer successfully created with ID: {}", savedCustomer.getId());
         return convertToCustomerResponse(savedCustomer);
@@ -142,10 +149,13 @@ public class CustomerService {
 
     private void checkActiveBookings(Long customerId) {
         try {
-            Boolean hasActiveBooking = restTemplate.getForObject(
+            HttpEntity<Void> entity = createAuthEntity();
+            Boolean hasActiveBooking = restTemplate.exchange(
                     bookingServiceUrl + "/api/bookings/active-bookings/" + customerId,
+                    HttpMethod.GET,
+                    entity,
                     Boolean.class
-            );
+            ).getBody();
 
             if (Boolean.TRUE.equals(hasActiveBooking)) {
                 logger.warn("Delete failed: Customer with ID {} has active bookings", customerId);
@@ -160,10 +170,11 @@ public class CustomerService {
 
     private void unlinkPastBookings(Long customerId) {
         try {
+            HttpEntity<Void> entity = createAuthEntity();
             restTemplate.exchange(
                     bookingServiceUrl + "/api/bookings/unlink-bookings/" + customerId,
                     HttpMethod.POST,
-                    HttpEntity.EMPTY,
+                    entity,
                     Void.class
             );
         } catch (RestClientException e) {
@@ -191,6 +202,22 @@ public class CustomerService {
 
         customerRepository.delete(customer);
         logger.info("Customer with email {} was successfully deleted", email);
+    }
+
+    private HttpEntity<Void> createAuthEntity() {
+        HttpHeaders headers = new HttpHeaders();
+
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String authHeader = request.getHeader("Authorization");
+
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                headers.set("Authorization", authHeader);
+            }
+        }
+
+        return new HttpEntity<>(headers);
     }
 
     private CustomerResponse convertToCustomerResponse(Customer customer) {

@@ -13,5 +13,13 @@ public record CreateCustomerRequest(
         @NotBlank(message = "E-post måste anges")
         @Email(message = "E-post måste vara giltig")
         String email,
-        String phone) {
+
+        String phone,
+
+        @NotBlank(message = "Användarnamn får inte vara tomt")
+        String username,
+
+        @NotBlank(message = "Lösenord får inte vara tomt")
+        String password
+) {
 }
