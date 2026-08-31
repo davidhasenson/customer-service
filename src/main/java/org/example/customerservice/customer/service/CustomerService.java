@@ -32,7 +32,7 @@ public class CustomerService {
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
 
     private final CustomerRepository customerRepository;
-    private final RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${booking.service.url}")
     private String bookingServiceUrl;
