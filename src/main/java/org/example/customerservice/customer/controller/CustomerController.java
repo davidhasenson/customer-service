@@ -37,23 +37,23 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerResponse> getCustomer(@PathVariable long id) {
+    public ResponseEntity<CustomerResponse> getCustomer(@PathVariable long id, Authentication authentication) {
         logger.info("Received HTTP GET request to fetch response with ID: {}", id);
-        CustomerResponse response = customerService.getCustomerById(id);
+        CustomerResponse response = customerService.getCustomerById(id, authentication.getName());
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/by-email")
-    public ResponseEntity<CustomerResponse> getCustomerByEmail(@RequestParam String email) {
+    public ResponseEntity<CustomerResponse> getCustomerByEmail(@RequestParam String email, Authentication authentication) {
         logger.info("Received HTTP GET request to fetch customer by email: {}", email);
-        CustomerResponse response = customerService.getCustomerByEmail(email);
+        CustomerResponse response = customerService.getCustomerByEmail(email, authentication.getName());
         return ResponseEntity.ok().body(response);
     }
 
     @PutMapping("/email/{email}")
-    public ResponseEntity<CustomerResponse> updateCustomer(@PathVariable String email, @Valid @RequestBody UpdateCustomerRequest request) {
+    public ResponseEntity<CustomerResponse> updateCustomer(@PathVariable String email, @Valid @RequestBody UpdateCustomerRequest request, Authentication authentication) {
         logger.info("Received PUT request to /api/customers/email/{} to update customer", email);
-        CustomerResponse updatedCustomer = customerService.updateCustomerByEmail(email, request);
+        CustomerResponse updatedCustomer = customerService.updateCustomerByEmail(email, request, authentication.getName());
         return ResponseEntity.ok(updatedCustomer);
     }
 
@@ -65,9 +65,9 @@ public class CustomerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerResponse> updateCustomer(@PathVariable Long id, @Valid @RequestBody UpdateCustomerRequest request) {
+    public ResponseEntity<CustomerResponse> updateCustomer(@PathVariable Long id, @Valid @RequestBody UpdateCustomerRequest request, Authentication authentication) {
         logger.info("Received HTTP PUT request to update customer with ID: {}", id);
-        CustomerResponse updated = customerService.updateCustomerById(id, request);
+        CustomerResponse updated = customerService.updateCustomerById(id, request, authentication.getName());
         return ResponseEntity.ok(updated);
     }
 

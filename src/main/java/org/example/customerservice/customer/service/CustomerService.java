@@ -15,8 +15,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -42,6 +40,7 @@ public class CustomerService {
         this.customerRepository = customerRepository;
     }
 
+    //borde endast kunna användas av admin
     public List<CustomerResponse> getAllCustomers() {
         logger.info("Fetching all customers from the database");
         List<Customer> customers = customerRepository.findAll();
@@ -54,18 +53,16 @@ public class CustomerService {
         return responseList;
     }
 
-    public CustomerResponse getCustomerById(Long id) {
+    public CustomerResponse getCustomerById(Long id, String authenticatedUsername) {
         logger.info("Fetching customer with ID: {}", id);
-        Customer customer = customerRepository.findById(id).orElseThrow(
-                () -> {
-                    logger.warn("Fetch failed: Customer with ID {} not found", id);
-                    return new NotFoundException("Kunden hittades inte");
-                }
-        );
+        Customer customer = findCustomerById(id);
+
+        checkIdentitiesMatch(customer, authenticatedUsername);
+
         return convertToCustomerResponse(customer);
     }
 
-    public CustomerResponse getCustomerByEmail(String email) {
+    public CustomerResponse getCustomerByEmail(String email, String authenticatedUsername) {
         logger.info("Fetching customer with email: {}", email);
         Customer customer = customerRepository.findByEmail(email).orElseThrow(
                 () -> {
@@ -73,6 +70,9 @@ public class CustomerService {
                     return new NotFoundException("Kunden hittades inte");
                 }
         );
+
+        checkIdentitiesMatch(customer, authenticatedUsername);
+
         return convertToCustomerResponse(customer);
     }
 
@@ -86,6 +86,14 @@ public class CustomerService {
             throw new IllegalStateException("E-postadressen är redan registrerad!");
         }
 
+        logger.info("Attempting to create a new customer with username: {}", request.username());
+        boolean usernameExists = customerRepository.existsByUsername(request.username());
+
+        if (usernameExists) {
+            logger.warn("Customer creation failed: username {} is already registered", request.username());
+            throw new IllegalStateException("Användarnamnet är redan registrerad!");
+        }
+
         Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone(), request.username(), request.password());
         Customer savedCustomer = customerRepository.save(customer);
         logger.info("Customer successfully created with ID: {}", savedCustomer.getId());
@@ -93,13 +101,11 @@ public class CustomerService {
     }
 
     @Transactional
-    public CustomerResponse updateCustomerById(Long id, UpdateCustomerRequest request) {
+    public CustomerResponse updateCustomerById(Long id, UpdateCustomerRequest request, String authenticatedUsername) {
         logger.info("Attempting to update customer with ID: {}", id);
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("Update failed: Customer with ID {} not found", id);
-                    return new NotFoundException("Kunden hittades inte");
-                });
+        Customer customer = findCustomerById(id);
+
+        checkIdentitiesMatch(customer, authenticatedUsername);
 
         customer.setFirstName(request.firstName());
         customer.setLastName(request.lastName());
@@ -111,7 +117,7 @@ public class CustomerService {
     }
 
     @Transactional
-    public CustomerResponse updateCustomerByEmail(String email, UpdateCustomerRequest request) {
+    public CustomerResponse updateCustomerByEmail(String email, UpdateCustomerRequest request, String authenticatedUsername) {
         logger.info("Attempting to update customer details for email: {}", email);
 
         Customer customer = customerRepository.findByEmail(email)
@@ -119,6 +125,8 @@ public class CustomerService {
                     logger.warn("Update failed: No customer found with email: {}", email);
                     return new NotFoundException("Ingen kund hittades med e-postadressen: " + email);
                 });
+
+        checkIdentitiesMatch(customer, authenticatedUsername);
 
         customer.setFirstName(request.firstName());
         customer.setLastName(request.lastName());
@@ -133,16 +141,10 @@ public class CustomerService {
     @Transactional
     public void deleteCustomerById(Long id, String authenticatedUsername) {
         logger.info("Attempting to delete customer with ID: {}", id);
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("Delete failed: Customer with ID {} not found", id);
-                    return new NotFoundException("Kunden hittades inte");
-                });
 
-        if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
-            logger.warn("User {} attempted to delete customer ID {}", authenticatedUsername, id);
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du får bara ta bort ditt eget konto");
-        }
+        Customer customer = findCustomerById(id);
+
+        checkIdentitiesMatch(customer, authenticatedUsername);
 
         checkActiveBookings(id);
 
@@ -153,7 +155,7 @@ public class CustomerService {
     }
 
 
-    // borde använda dto
+
     private void checkActiveBookings(Long customerId) {
         try {
             HttpEntity<Void> entity = createAuthEntity();
@@ -174,7 +176,6 @@ public class CustomerService {
         }
     }
 
-    //borde använda dto ?
     private void unlinkPastBookings(Long customerId) {
         try {
             HttpEntity<Void> entity = createAuthEntity();
@@ -191,7 +192,7 @@ public class CustomerService {
     }
 
     @Transactional
-    public void deleteCustomerByEmail(String email, String authenticatedUsername ) {
+    public void deleteCustomerByEmail(String email, String authenticatedUsername) {
         logger.info("Attempting to delete customer with email: {}", email);
 
         Customer customer = customerRepository.findByEmail(email)
@@ -202,10 +203,7 @@ public class CustomerService {
 
         Long id = customer.getId();
 
-        if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
-            logger.warn("User {} attempted to delete customer ID {}", authenticatedUsername, id);
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du får bara ta bort ditt eget konto");
-        }
+        checkIdentitiesMatch(customer, authenticatedUsername);
 
         checkActiveBookings(id);
 
@@ -214,22 +212,6 @@ public class CustomerService {
         customerRepository.delete(customer);
         logger.info("Customer with email {} was successfully deleted", email);
     }
-
-//    private HttpEntity<Void> createAuthEntity() {
-//        HttpHeaders headers = new HttpHeaders();
-//
-//        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-//        if (attributes != null) {
-//            HttpServletRequest request = attributes.getRequest();
-//            String authHeader = request.getHeader("Authorization");
-//
-//            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-//                headers.set("Authorization", authHeader);
-//            }
-//        }
-//
-//        return new HttpEntity<>(headers);
-//    }
 
     private String getAuthHeader() {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -258,7 +240,6 @@ public class CustomerService {
     //kan behövas senare
     private <T> HttpEntity<T> createAuthEntityWithBody(T body) {
         HttpHeaders headers = new HttpHeaders();
-        // headers.setContentType(MediaType.APPLICATION_JSON); // Ber berörda tjänster att läsa JSON
 
         String authHeader = getAuthHeader();
         if (authHeader != null) {
@@ -266,6 +247,23 @@ public class CustomerService {
         }
 
         return new HttpEntity<>(body, headers); // Skickar med både JSON-datan och headers!
+    }
+
+    private void checkIdentitiesMatch(Customer customer, String authenticatedUsername) {
+        if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
+            logger.warn("Security violation: User {} attempted to access/modify customer ID {}",
+                    authenticatedUsername, customer.getId());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du har inte behörighet att utföra denna åtgärd");
+        }
+    }
+
+    private Customer findCustomerById(Long id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.warn("Customer with ID {} not found", id);
+                    return new NotFoundException("Kunden hittades inte");
+                });
+        return customer;
     }
 
     private CustomerResponse convertToCustomerResponse(Customer customer) {
