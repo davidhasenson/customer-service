@@ -47,4 +47,5 @@ public class JwtService {
         byte[] bytes = SECRET.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(bytes);
     }
+
 }

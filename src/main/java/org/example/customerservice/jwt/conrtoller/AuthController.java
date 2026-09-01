@@ -27,4 +27,5 @@ public class AuthController {
         }
         throw new RuntimeException("Fel inloggning");
     }
+
 }

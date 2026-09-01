@@ -21,5 +21,6 @@ public record CreateCustomerRequest(
 
         @NotBlank(message = "Lösenord får inte vara tomt")
         String password
+
 ) {
 }

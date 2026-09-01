@@ -8,5 +8,6 @@ public record LoginRequest(
 
         @NotBlank (message = "Lösenord måste anges")
         String password
+
 ) {
 }

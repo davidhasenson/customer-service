@@ -43,4 +43,5 @@ public class CustomerSeeder implements CommandLineRunner {
             logger.info("Database already contains customer data. Skipping seeding.");
         }
     }
+
 }

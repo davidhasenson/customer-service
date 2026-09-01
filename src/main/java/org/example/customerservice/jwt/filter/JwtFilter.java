@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.customerservice.customer.repository.CustomerRepository;
 import org.example.customerservice.jwt.service.JwtService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,9 +18,11 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwt;
+    private final CustomerRepository customerRepository;
 
-    JwtFilter(JwtService j) {
+    public JwtFilter(JwtService j, CustomerRepository customerRepository) {
         this.jwt = j;
+        this.customerRepository = customerRepository;
     }
 
     @Override
@@ -29,9 +32,11 @@ public class JwtFilter extends OncePerRequestFilter {
         if (h != null && h.startsWith("Bearer ")) {
             String token = h.substring(7);
             if (jwt.isTokenValid(token)) {
-                var user = jwt.extractUsername(token);
-                var auth = new UsernamePasswordAuthenticationToken(user, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                var username = jwt.extractUsername(token);
+                if (customerRepository.existsByUsername(username)) {
+                    var auth = new UsernamePasswordAuthenticationToken(username, null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
         }
         chain.doFilter(req, res);
