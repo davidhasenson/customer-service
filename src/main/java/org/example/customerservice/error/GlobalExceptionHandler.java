@@ -97,6 +97,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(responseBody);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> handleForbiddenException(
+            ForbiddenException ex, HttpServletRequest request) {
+
+        Map<String, Object> responseBody = createBaseResponse(HttpStatus.FORBIDDEN, request);
+        responseBody.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseBody);
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpectedException(
             Exception ex, HttpServletRequest request) {
