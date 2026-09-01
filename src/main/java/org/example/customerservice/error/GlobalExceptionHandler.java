@@ -1,6 +1,9 @@
 package org.example.customerservice.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,16 +20,13 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class GlobalExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        Map<String, Object> responseBody = new HashMap<>();
-
-        responseBody.put("timestamp", Instant.now().toString());
-        responseBody.put("status", HttpStatus.BAD_REQUEST.value());
-        responseBody.put("error", "Bad Request");
-        responseBody.put("path", request.getRequestURI());
+        Map<String, Object> responseBody = createBaseResponse(HttpStatus.BAD_REQUEST, request);
 
         Map<String, String> validationErrors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
@@ -35,6 +35,7 @@ public class GlobalExceptionHandler {
             validationErrors.put(fieldName, errorMessage);
         });
 
+        responseBody.put("message", "Valideringen misslyckades");
         responseBody.put("errors", validationErrors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
@@ -68,6 +69,29 @@ public class GlobalExceptionHandler {
         responseBody.put("message", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDataAccessException(
+            DataAccessException ex, HttpServletRequest request) {
+
+        logger.error("Databasfel vid {} {}", request.getMethod(), request.getRequestURI(), ex);
+
+        Map<String, Object> responseBody = createBaseResponse(HttpStatus.SERVICE_UNAVAILABLE, request);
+        responseBody.put("message", "Kan inte nå databasen just nu. Försök igen om en liten stund.");
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(responseBody);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleUnexpectedException(
+            Exception ex, HttpServletRequest request) {
+        logger.error("Ett oväntat fel inträffade vid {} {}", request.getMethod(), request.getRequestURI(), ex);
+
+        Map<String, Object> responseBody = createBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, request);
+        responseBody.put("message", "Ett oväntat fel inträffade. Försök igen senare.");
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
     }
 
     private Map<String, Object> createBaseResponse(HttpStatus status, HttpServletRequest request) {
