@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -81,6 +82,19 @@ public class GlobalExceptionHandler {
         responseBody.put("message", "Kan inte nå databasen just nu. Försök igen om en liten stund.");
 
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(responseBody);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(
+            ResponseStatusException ex, HttpServletRequest request) {
+
+        logger.error("Fel vid kommunikation med annan tjänst vid {} {}", request.getMethod(), request.getRequestURI(), ex);
+
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        Map<String, Object> responseBody = createBaseResponse(status, request);
+        responseBody.put("message", ex.getReason());
+
+        return ResponseEntity.status(status).body(responseBody);
     }
 
     @ExceptionHandler(Exception.class)
