@@ -84,4 +84,5 @@ public class CustomerController {
         customerService.deleteCustomerByEmail(email, authentication.getName());
         return ResponseEntity.noContent().build();
     }
+
 }
