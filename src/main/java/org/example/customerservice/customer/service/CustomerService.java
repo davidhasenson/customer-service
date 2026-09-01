@@ -7,6 +7,7 @@ import org.example.customerservice.customer.model.Customer;
 import org.example.customerservice.customer.model.dto.CustomerResponse;
 import org.example.customerservice.customer.model.dto.UpdateCustomerRequest;
 import org.example.customerservice.customer.repository.CustomerRepository;
+import org.example.customerservice.error.ForbiddenException;
 import org.example.customerservice.error.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -254,7 +255,7 @@ public class CustomerService {
         if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
             logger.warn("Security violation: User {} attempted to access/modify customer ID {}",
                     authenticatedUsername, customer.getId());
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du har inte behörighet att utföra denna åtgärd");
+            throw new ForbiddenException( "Du har inte behörighet att utföra denna åtgärd");
         }
     }
 
