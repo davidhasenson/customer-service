@@ -10,8 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.Authenticator;
 import java.util.List;
 
 @RestController
@@ -70,16 +72,16 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomerById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCustomerById(@PathVariable Long id, Authentication authentication) {
         logger.info("Received HTTP DELETE request to delete customer with ID: {}", id);
-        customerService.deleteCustomerById(id);
+        customerService.deleteCustomerById(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/email/{email}")
-    public ResponseEntity<?> deleteCustomerByEmail(@PathVariable String email) {
+    public ResponseEntity<?> deleteCustomerByEmail(@PathVariable String email, Authentication authentication) {
         logger.info("Received HTTP DELETE request to delete customer with email: {}", email);
-        customerService.deleteCustomerByEmail(email);
+        customerService.deleteCustomerByEmail(email, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 }

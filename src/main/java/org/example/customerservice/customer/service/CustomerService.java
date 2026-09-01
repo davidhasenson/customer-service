@@ -131,13 +131,18 @@ public class CustomerService {
     }
 
     @Transactional
-    public void deleteCustomerById(Long id) {
+    public void deleteCustomerById(Long id, String authenticatedUsername) {
         logger.info("Attempting to delete customer with ID: {}", id);
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("Delete failed: Customer with ID {} not found", id);
                     return new NotFoundException("Kunden hittades inte");
                 });
+
+        if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
+            logger.warn("User {} attempted to delete customer ID {}", authenticatedUsername, id);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du får bara ta bort ditt eget konto");
+        }
 
         checkActiveBookings(id);
 
@@ -147,6 +152,8 @@ public class CustomerService {
         logger.info("Customer with ID {} was successfully deleted", id);
     }
 
+
+    // borde använda dto
     private void checkActiveBookings(Long customerId) {
         try {
             HttpEntity<Void> entity = createAuthEntity();
@@ -167,7 +174,7 @@ public class CustomerService {
         }
     }
 
-
+    //borde använda dto ?
     private void unlinkPastBookings(Long customerId) {
         try {
             HttpEntity<Void> entity = createAuthEntity();
@@ -184,7 +191,7 @@ public class CustomerService {
     }
 
     @Transactional
-    public void deleteCustomerByEmail(String email) {
+    public void deleteCustomerByEmail(String email, String authenticatedUsername ) {
         logger.info("Attempting to delete customer with email: {}", email);
 
         Customer customer = customerRepository.findByEmail(email)
@@ -193,31 +200,72 @@ public class CustomerService {
                     return new NotFoundException("Kunden hittades inte");
                 });
 
-        Long customerId = customer.getId();
+        Long id = customer.getId();
 
+        if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
+            logger.warn("User {} attempted to delete customer ID {}", authenticatedUsername, id);
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du får bara ta bort ditt eget konto");
+        }
 
-        checkActiveBookings(customerId);
+        checkActiveBookings(id);
 
-        unlinkPastBookings(customerId);
+        unlinkPastBookings(id);
 
         customerRepository.delete(customer);
         logger.info("Customer with email {} was successfully deleted", email);
     }
 
+//    private HttpEntity<Void> createAuthEntity() {
+//        HttpHeaders headers = new HttpHeaders();
+//
+//        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+//        if (attributes != null) {
+//            HttpServletRequest request = attributes.getRequest();
+//            String authHeader = request.getHeader("Authorization");
+//
+//            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+//                headers.set("Authorization", authHeader);
+//            }
+//        }
+//
+//        return new HttpEntity<>(headers);
+//    }
+
+    private String getAuthHeader() {
+        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attr != null) {
+            HttpServletRequest request = attr.getRequest();
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                return authHeader;
+            }
+        }
+        return null;
+    }
+
     private HttpEntity<Void> createAuthEntity() {
         HttpHeaders headers = new HttpHeaders();
+        String authHeader = getAuthHeader();
 
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            HttpServletRequest request = attributes.getRequest();
-            String authHeader = request.getHeader("Authorization");
-
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                headers.set("Authorization", authHeader);
-            }
+        if (authHeader != null) {
+            headers.set("Authorization", authHeader);
         }
 
         return new HttpEntity<>(headers);
+    }
+
+
+    //kan behövas senare
+    private <T> HttpEntity<T> createAuthEntityWithBody(T body) {
+        HttpHeaders headers = new HttpHeaders();
+        // headers.setContentType(MediaType.APPLICATION_JSON); // Ber berörda tjänster att läsa JSON
+
+        String authHeader = getAuthHeader();
+        if (authHeader != null) {
+            headers.set("Authorization", authHeader);
+        }
+
+        return new HttpEntity<>(body, headers); // Skickar med både JSON-datan och headers!
     }
 
     private CustomerResponse convertToCustomerResponse(Customer customer) {
@@ -229,4 +277,20 @@ public class CustomerService {
                 customer.getPhone()
         );
     }
+
+
+//
+//        public String getCurrentRawToken() {
+//            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+//            if (attr != null) {
+//                HttpServletRequest request = attr.getRequest();
+//                String authHeader = request.getHeader("Authorization");
+//                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+//                    return authHeader.substring(7); // Returnerar bara själva token-strängen
+//                }
+//            }
+//            return null;
+//        }
+
+
 }
