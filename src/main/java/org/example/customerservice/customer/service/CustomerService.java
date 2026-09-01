@@ -190,7 +190,7 @@ public class CustomerService {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Kunde inte avkoppla bokningar hos bokningstjänsten");
         }
     }
-}
+
 
     @Transactional
     public void deleteCustomerByEmail(String email, String authenticatedUsername) {
