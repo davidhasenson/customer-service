@@ -23,6 +23,7 @@ public class SecurityConfig {
     SecurityFilterChain chain(HttpSecurity http) throws Exception {
         return http
                 .csrf(c -> c.disable())
+                .cors(c -> {})
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/customers").permitAll()
