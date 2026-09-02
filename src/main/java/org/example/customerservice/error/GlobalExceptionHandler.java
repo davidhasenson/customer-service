@@ -92,7 +92,7 @@ public class GlobalExceptionHandler {
 
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         Map<String, Object> responseBody = createBaseResponse(status, request);
-        responseBody.put("message", ex.getReason());
+        responseBody.put("message", ex.getReason() != null ? ex.getReason() : "Ett fel inträffade");
 
         return ResponseEntity.status(status).body(responseBody);
     }
@@ -107,6 +107,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseBody);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorizedException(
+            UnauthorizedException ex, HttpServletRequest request) {
+
+        Map<String, Object> responseBody = createBaseResponse(HttpStatus.UNAUTHORIZED, request);
+        responseBody.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpectedException(

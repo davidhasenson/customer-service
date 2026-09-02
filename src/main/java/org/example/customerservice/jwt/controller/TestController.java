@@ -1,4 +1,4 @@
-package org.example.customerservice.jwt.conrtoller;
+package org.example.customerservice.jwt.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
