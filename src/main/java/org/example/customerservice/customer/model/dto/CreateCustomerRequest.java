@@ -2,6 +2,7 @@ package org.example.customerservice.customer.model.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public record CreateCustomerRequest(
         @NotBlank(message = "Förnamn måste anges")
@@ -20,6 +21,7 @@ public record CreateCustomerRequest(
         String username,
 
         @NotBlank(message = "Lösenord får inte vara tomt")
+        @Size(min = 8, message = "Lösenordet måste vara minst 8 tecken")
         String password
 
 ) {

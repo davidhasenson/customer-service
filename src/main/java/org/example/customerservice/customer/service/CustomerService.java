@@ -16,6 +16,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -32,16 +33,17 @@ public class CustomerService {
     private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
 
     private final CustomerRepository customerRepository;
+    private final PasswordEncoder passwordEncoder;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${booking.service.url}")
     private String bookingServiceUrl;
 
-    public CustomerService(CustomerRepository customerRepository) {
+    public CustomerService(CustomerRepository customerRepository, PasswordEncoder passwordEncoder) {
         this.customerRepository = customerRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    //borde endast kunna användas av admin
     public List<CustomerResponse> getAllCustomers() {
         logger.info("Fetching all customers from the database");
         List<Customer> customers = customerRepository.findAll();
@@ -95,7 +97,9 @@ public class CustomerService {
             throw new IllegalStateException("Användarnamnet är redan registrerad!");
         }
 
-        Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone(), request.username(), request.password());
+        String hashedPassword = passwordEncoder.encode(request.password());
+
+        Customer customer = new Customer(request.firstName(), request.lastName(), request.email(), request.phone(), request.username(), hashedPassword);
         Customer savedCustomer = customerRepository.save(customer);
         logger.info("Customer successfully created with ID: {}", savedCustomer.getId());
         return convertToCustomerResponse(savedCustomer);
@@ -154,8 +158,6 @@ public class CustomerService {
         customerRepository.delete(customer);
         logger.info("Customer with ID {} was successfully deleted", id);
     }
-
-
 
     private void checkActiveBookings(Long customerId) {
         try {
@@ -238,8 +240,6 @@ public class CustomerService {
         return new HttpEntity<>(headers);
     }
 
-
-    //kan behövas senare
     private <T> HttpEntity<T> createAuthEntityWithBody(T body) {
         HttpHeaders headers = new HttpHeaders();
 
@@ -277,20 +277,4 @@ public class CustomerService {
                 customer.getPhone()
         );
     }
-
-
-//
-//        public String getCurrentRawToken() {
-//            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-//            if (attr != null) {
-//                HttpServletRequest request = attr.getRequest();
-//                String authHeader = request.getHeader("Authorization");
-//                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-//                    return authHeader.substring(7); // Returnerar bara själva token-strängen
-//                }
-//            }
-//            return null;
-//        }
-
-
 }
