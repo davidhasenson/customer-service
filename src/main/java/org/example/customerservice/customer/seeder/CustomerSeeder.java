@@ -5,12 +5,14 @@ import org.example.customerservice.customer.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(value = 2)
+@Profile("!test")
 public class CustomerSeeder implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomerSeeder.class);

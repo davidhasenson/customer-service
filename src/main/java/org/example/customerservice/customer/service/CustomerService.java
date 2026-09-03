@@ -271,6 +271,7 @@ public class CustomerService {
     private CustomerResponse convertToCustomerResponse(Customer customer) {
         return new CustomerResponse(
                 customer.getId(),
+                customer.getUsername(),
                 customer.getFirstName(),
                 customer.getLastName(),
                 customer.getEmail(),
