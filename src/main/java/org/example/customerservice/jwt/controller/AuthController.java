@@ -1,4 +1,4 @@
-package org.example.customerservice.jwt.conrtoller;
+package org.example.customerservice.jwt.controller;
 
 import org.example.customerservice.customer.repository.CustomerRepository;
 import org.example.customerservice.jwt.model.dto.LoginRequest;

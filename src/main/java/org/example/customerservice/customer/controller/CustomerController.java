@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.Authenticator;
 import java.util.List;
 
 @RestController
@@ -84,5 +83,4 @@ public class CustomerController {
         customerService.deleteCustomerByEmail(email, authentication.getName());
         return ResponseEntity.noContent().build();
     }
-
 }
