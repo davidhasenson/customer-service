@@ -14,10 +14,27 @@ spec:
     spec:
       containers:
         - name: customer-service
-          image: customer-service
+          image: pensionat-customer-service:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8081
+          env:
+            - name: DB_URL
+              value: jdbc:mysql://customer-db:3306/customer_db
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: customer-secrets
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: customer-secrets
+                  key: JWT_SECRET
+            - name: BOOKING_SERVICE_URL
+              value: http://pensionat-app:8083
 
 ---
 
@@ -26,6 +43,7 @@ kind: Service
 metadata:
   name: customer-service
 spec:
+  type: LoadBalancer
   selector:
     app: customer-service
   ports:
