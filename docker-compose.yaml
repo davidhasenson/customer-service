@@ -19,7 +19,7 @@ services:
       - .env
     environment:
       DB_URL: jdbc:mysql://customer-db:3306/customer_db
-      BOOKING_SERVICE_URL: http://pensionat-app:8080
+      BOOKING_SERVICE_URL: http://pensionat-app:8083
     depends_on:
       customer-db:
         condition: service_healthy
