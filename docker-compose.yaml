@@ -3,12 +3,23 @@ services:
   customer-db:
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_USERNAME}
-      MYSQL_DATABASE: customer-db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: customer_db
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p12345" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   customer-service:
     build: .
     ports:
       - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      DB_URL: jdbc:mysql://customer-db:3306/customer_db
+      BOOKING_SERVICE_URL: http://pensionat-app:8080
     depends_on:
-      - customer-db
+      customer-db:
+        condition: service_healthy
