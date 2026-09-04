@@ -28,12 +28,13 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
-        logger.info("Received HTTP GET request to fetch all customers.");
-        List<CustomerResponse> customers = customerService.getAllCustomers();
-        return ResponseEntity.ok().body(customers);
-    }
+// Can be used later when there is an admin role
+//    @GetMapping
+//    public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
+//        logger.info("Received HTTP GET request to fetch all customers.");
+//        List<CustomerResponse> customers = customerService.getAllCustomers();
+//        return ResponseEntity.ok().body(customers);
+//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponse> getCustomer(@PathVariable long id, Authentication authentication) {
