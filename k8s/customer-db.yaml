@@ -17,7 +17,7 @@ spec:
           image: mysql:8
           env:
               - name: MYSQL_ROOT_PASSWORD
-                value: "12345"
+                value: DB_PASSWORD
               - name: MYSQL_DATABASE
                 value: customer_db
           ports:
