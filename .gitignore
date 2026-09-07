@@ -33,3 +33,4 @@ build/
 .vscode/
 
 /.env
+k8s/secret.yaml
