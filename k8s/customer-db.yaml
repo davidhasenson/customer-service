@@ -16,10 +16,13 @@ spec:
         - name: mysql
           image: mysql:8
           env:
-              - name: MYSQL_ROOT_PASSWORD
-                value: DB_PASSWORD
-              - name: MYSQL_DATABASE
-                value: customer_db
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: customer-secrets
+                  key: DB_PASSWORD
+            - name: MYSQL_DATABASE
+              value: customer_db
           ports:
             - containerPort: 3306
 
