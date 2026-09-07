@@ -74,7 +74,12 @@ public class CustomerApiTest {
     @Test
     void createCustomerInvalidEmailReturns400BadRequest() throws Exception {
         CreateCustomerRequest request = new CreateCustomerRequest(
-                "Frodo", "Baggins", "invalid-email-format", "0701234567", "frodo123", "password123"
+                "Frodo",
+                "Baggins",
+                "email",
+                "0701234567",
+                "frodo123",
+                "password123"
         );
 
         mockMvc.perform(post("/api/customers")
