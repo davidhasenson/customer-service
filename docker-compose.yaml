@@ -6,7 +6,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: customer_db
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$DB_PASSWORD"]
+      test: [ "CMD-SHELL", "mysql -u root -p$DB_PASSWORD -e 'SELECT 1;'" ]
       interval: 5s
       timeout: 5s
       retries: 10
