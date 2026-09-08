@@ -1,0 +1,88 @@
+services:
+
+  # ---- customer-service ----
+  customer-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: customer_db
+    healthcheck:
+      test: [ "CMD-SHELL", "mysql -u root -p$DB_PASSWORD -e 'SELECT 1;'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+
+  customer-service:
+    build: ./customer-service
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./customer-service/.env
+    environment:
+      DB_URL: jdbc:mysql://customer-db:3306/customer_db
+      BOOKING_SERVICE_URL: http://pensionat-app:8083
+    depends_on:
+      customer-db:
+        condition: service_healthy
+
+  # ---- pensionat-app ----
+  pensionat-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: pensionat_db
+    healthcheck:
+      test: [ "CMD-SHELL", "mysql -u root -p$DB_PASSWORD -e 'SELECT 1;'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+
+  pensionat-app:
+    build: ./pensionat-app
+    ports:
+      - "8083:8083"
+    env_file:
+      - ./pensionat-app/.env
+    environment:
+      DB_URL: jdbc:mysql://pensionat-db:3306/pensionat_db
+      CUSTOMER_SERVICE_BASE_URL: http://customer-service:8081
+    depends_on:
+      pensionat-db:
+        condition: service_healthy
+
+  # ---- review-service ----
+  review-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: review_db
+    healthcheck:
+      test: [ "CMD-SHELL", "mysql -u root -p$DB_PASSWORD -e 'SELECT 1;'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+
+  review-service:
+    build: ./review-service
+    ports:
+      - "8082:8082"
+    env_file:
+      - ./review-service/.env
+    environment:
+      DB_URL: jdbc:mysql://review-db:3306/review_db
+    depends_on:
+      review-db:
+        condition: service_healthy
+
+  # ---- frontend ----
+  pensionat-app-frontend:
+    build: ./pensionat-app-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - customer-service
+      - pensionat-app
+      - review-service
