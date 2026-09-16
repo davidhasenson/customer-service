@@ -39,7 +39,7 @@ jobs:
       - name: Set up java
         uses: actions/setup-java@v5
         with:
-          java-version: "17"
+          java-version: ${{matrix.java}}
           distribution: "temurin"
           cache: "maven"
 
@@ -47,7 +47,7 @@ jobs:
         run: mvn -B clean package -DskipTests
 
       - name: Run Tests
-        run: mvn
+        run: mvn -B test
 
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db_test
