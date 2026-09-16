@@ -20,7 +20,7 @@ jobs:
         ports:
           - 3306:3306
         options:
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-cmd="mysql -u root -p$DB_PASSWORD -e 'SELECT 1;'"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
