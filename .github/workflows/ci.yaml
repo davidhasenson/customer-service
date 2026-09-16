@@ -43,3 +43,4 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db_test?createDatabaseIfNotExist=true
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: root
+          JWT_SECRET: 5367566859703373367639792F423F452848284D6251655468576D5A71347437
