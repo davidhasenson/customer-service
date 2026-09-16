@@ -40,6 +40,6 @@ jobs:
         run: mvn -B package
 
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customerdb
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: root
