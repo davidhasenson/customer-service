@@ -44,7 +44,10 @@ jobs:
           cache: "maven"
 
       - name: Build and run tests
-        run: mvn -B package
+        run: mvn -B clean package -DskipTests
+
+      - name: Run Tests
+        run: mvn
 
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db_test
