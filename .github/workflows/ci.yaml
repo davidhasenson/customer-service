@@ -37,9 +37,9 @@ jobs:
           cache: "maven"
 
       - name: Build and run tests
-        run: mvn -B package -DskipTests
+        run: mvn -B package
 
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db_test
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db_test?createDatabaseIfNotExist=true
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: root
