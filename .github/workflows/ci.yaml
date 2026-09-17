@@ -7,7 +7,10 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os
+
+    environment: test
+
     strategy:
       matrix:
         os:
@@ -20,8 +23,8 @@ jobs:
       mysql:
         image: mysql:8
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: customer_db_test
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ vars.MYSQL_TEST_DATABASE }}
         ports:
           - 3306:3306
         options:
@@ -48,7 +51,7 @@ jobs:
         run: mvn -B test
 
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/customer_db_test
-          DB_USERNAME: root
-          DB_PASSWORD: root
-          JWT_SECRET: 5367566859703373367639792F423F452848284D6251655468576D5A71347437
+          DB_URL: ${{ vars.SPRING_DATASOURCE_URL }}
+          DB_USERNAME: ${{ vars.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
