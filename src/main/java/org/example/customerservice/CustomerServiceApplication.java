@@ -18,6 +18,7 @@ public class CustomerServiceApplication {
 //
 //        SpringApplication.run(CustomerServiceApplication.class, args);
 
+
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
