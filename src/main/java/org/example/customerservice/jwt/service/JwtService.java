@@ -12,8 +12,12 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt_secret}")
+    //@Value("${jwt_secret}")
     String SECRET;
+
+    public JwtService(@Value("${jwt_secret}") String SECRET) {
+        this.SECRET = SECRET;
+    }
 
     //15 minutes is equal to 900 000 milliseconds.
     public String generateToken(String username) {
