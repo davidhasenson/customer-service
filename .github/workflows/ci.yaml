@@ -88,3 +88,4 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/pensionat-app:v${{ github.run_number }}
             ghcr.io/${{ github.repository_owner }}/pensionat-app:latest
+
