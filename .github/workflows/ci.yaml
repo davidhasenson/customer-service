@@ -70,8 +70,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ vars.DOCKER_USERNAME }}/pensionat-app:v${{ github.run_number }}
-            ${{ vars.DOCKER_USERNAME }}/pensionat-app:latest
+            ${{ vars.DOCKER_USERNAME }}/customer-servicep:v${{ github.run_number }}
+            ${{ vars.DOCKER_USERNAME }}/customer-service:latest
 
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
@@ -86,5 +86,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/pensionat-app:v${{ github.run_number }}
-            ghcr.io/${{ github.repository_owner }}/pensionat-app:latest
+            ghcr.io/${{ github.repository_owner }}/customer-service:v${{ github.run_number }}
+            ghcr.io/${{ github.repository_owner }}/customer-service:latest
