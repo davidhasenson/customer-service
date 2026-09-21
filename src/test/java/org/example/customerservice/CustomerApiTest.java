@@ -62,7 +62,7 @@ public class CustomerApiTest {
         mockMvc.perform(post("/api/customers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.firstName").value("Frodo"))
                 .andExpect(jsonPath("$.lastName").value("Baggins"))
