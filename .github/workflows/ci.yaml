@@ -94,3 +94,4 @@ jobs:
 #          tags: |
 #            ghcr.io/${{ github.repository_owner }}/customer-service:v${{ github.run_number }}
 #            ghcr.io/${{ github.repository_owner }}/customer-service:latest
+
