@@ -252,6 +252,14 @@ Pull Requesten ska normalt innehålla:
 * Tester eller annan verifiering
 * Eventuella övriga ändringar som reviewers behöver känna till
 
+För att koppla Pull Requesten till rätt ticket kan ticket-numret anges i PR-beskrivningen:
+
+```text
+Ticket: #112
+```
+
+Där `#112` ersätts med numret på den aktuella ticketen. Pull Requesten får ett eget nummer av GitHub, vilket innebär att PR-numret och ticket-numret kan vara olika.
+
 **6. Granskning och tester**
 
 Innan mergning ska ändringarna granskas av en annan utvecklare. Relevanta tester och automatiska kontroller ska passera enligt projektets krav.
