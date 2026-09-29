@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .csrf(c -> c.disable())
                 .cors(c -> {})
                 .authorizeHttpRequests(a -> a
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/customers").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/test/hello").permitAll()
