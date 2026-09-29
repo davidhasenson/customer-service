@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/customers")
 @CrossOrigin(origins = "*")
@@ -45,21 +43,21 @@ public class CustomerController {
 
     @GetMapping("/by-email")
     public ResponseEntity<CustomerResponse> getCustomerByEmail(@RequestParam String email, Authentication authentication) {
-        logger.info("Received HTTP GET request to fetch customer by email: {}", email);
+        logger.info("Received HTTP GET request to fetch customer by email");
         CustomerResponse response = customerService.getCustomerByEmail(email, authentication.getName());
         return ResponseEntity.ok().body(response);
     }
 
     @PutMapping("/email/{email}")
     public ResponseEntity<CustomerResponse> updateCustomer(@PathVariable String email, @Valid @RequestBody UpdateCustomerRequest request, Authentication authentication) {
-        logger.info("Received PUT request to /api/customers/email/{} to update customer", email);
+        logger.info("Received PUT request to /api/customers/email/ to update customer");
         CustomerResponse updatedCustomer = customerService.updateCustomerByEmail(email, request, authentication.getName());
         return ResponseEntity.ok(updatedCustomer);
     }
 
     @PostMapping
     public ResponseEntity<CustomerResponse> createCustomer(@Valid @RequestBody CreateCustomerRequest request) {
-        logger.info("Received HTTP POST request to create customer with email: {}", request.email());
+        logger.info("Received HTTP POST request to create customer");
         CustomerResponse response = customerService.createCustomer(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -80,7 +78,7 @@ public class CustomerController {
 
     @DeleteMapping("/email/{email}")
     public ResponseEntity<?> deleteCustomerByEmail(@PathVariable String email, Authentication authentication) {
-        logger.info("Received HTTP DELETE request to delete customer with email: {}", email);
+        logger.info("Received HTTP DELETE request to delete customer by email");
         customerService.deleteCustomerByEmail(email, authentication.getName());
         return ResponseEntity.noContent().build();
     }
