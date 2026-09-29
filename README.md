@@ -481,7 +481,7 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 Exempel:
 
 ```text
-v142
+build142
 ```
 
 Det betyder att imagen kommer från workflow run nummer `142`. Detta ska inte betraktas som applikationens releaseversion, utan som ett identifierbart build-nummer.
