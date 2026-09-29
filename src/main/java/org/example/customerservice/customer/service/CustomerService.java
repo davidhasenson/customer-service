@@ -66,10 +66,10 @@ public class CustomerService {
     }
 
     public CustomerResponse getCustomerByEmail(String email, String authenticatedUsername) {
-        logger.info("Fetching customer with email: {}", email);
+        logger.info("Fetching customer by email");
         Customer customer = customerRepository.findByEmail(email).orElseThrow(
                 () -> {
-                    logger.warn("Fetch failed: Customer with email {} not found", email);
+                    logger.warn("Fetch failed: No customer found for provided email");
                     return new NotFoundException("Kunden hittades inte");
                 }
         );
@@ -81,19 +81,19 @@ public class CustomerService {
 
     @Transactional
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
-        logger.info("Attempting to create a new customer with email: {}", request.email());
+        logger.info("Attempting to create a new customer");
         boolean emailExists = customerRepository.findByEmail(request.email()).isPresent();
 
         if (emailExists) {
-            logger.warn("Customer creation failed: Email {} is already registered", request.email());
+            logger.warn("Customer creation failed: Email is already registered");
             throw new IllegalStateException("E-postadressen är redan registrerad!");
         }
 
-        logger.info("Attempting to create a new customer with username: {}", request.username());
+        logger.info("Attempting to create a new customer with username");
         boolean usernameExists = customerRepository.existsByUsername(request.username());
 
         if (usernameExists) {
-            logger.warn("Customer creation failed: username {} is already registered", request.username());
+            logger.warn("Customer creation failed: username is already registered");
             throw new IllegalStateException("Användarnamnet är redan registrerad!");
         }
 
@@ -123,11 +123,11 @@ public class CustomerService {
 
     @Transactional
     public CustomerResponse updateCustomerByEmail(String email, UpdateCustomerRequest request, String authenticatedUsername) {
-        logger.info("Attempting to update customer details for email: {}", email);
+        logger.info("Attempting to update customer details via email");
 
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    logger.warn("Update failed: No customer found with email: {}", email);
+                    logger.warn("Update failed: No customer found for the provided email");
                     return new NotFoundException("Ingen kund hittades med e-postadressen: " + email);
                 });
 
@@ -139,7 +139,7 @@ public class CustomerService {
 
         Customer updatedCustomer = customerRepository.save(customer);
 
-        logger.info("Customer details successfully updated for customer ID: {} (Email: {})", updatedCustomer.getId(), email);
+        logger.info("Customer details successfully updated for customer ID: {} ", updatedCustomer.getId());
         return convertToCustomerResponse(updatedCustomer);
     }
 
@@ -197,11 +197,11 @@ public class CustomerService {
 
     @Transactional
     public void deleteCustomerByEmail(String email, String authenticatedUsername) {
-        logger.info("Attempting to delete customer with email: {}", email);
+        logger.info("Attempting to delete customer by email");
 
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    logger.warn("Delete failed: Customer with email {} not found", email);
+                    logger.warn("Delete failed: No customer found for the provided email");
                     return new NotFoundException("Kunden hittades inte");
                 });
 
@@ -214,7 +214,7 @@ public class CustomerService {
         unlinkPastBookings(id);
 
         customerRepository.delete(customer);
-        logger.info("Customer with email {} was successfully deleted", email);
+        logger.info("Customer with ID {} was successfully deleted", id);
     }
 
     private String getAuthHeader() {
@@ -253,8 +253,8 @@ public class CustomerService {
 
     private void checkIdentitiesMatch(Customer customer, String authenticatedUsername) {
         if (!customer.getUsername().equalsIgnoreCase(authenticatedUsername)) {
-            logger.warn("Security violation: User {} attempted to access/modify customer ID {}",
-                    authenticatedUsername, customer.getId());
+            logger.warn("Security violation: An authenticated user attempted to access/modify customer Id {}",
+                    customer.getId());
             throw new ForbiddenException( "Du har inte behörighet att utföra denna åtgärd");
         }
     }
