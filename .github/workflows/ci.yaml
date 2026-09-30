@@ -19,6 +19,46 @@ jobs:
 
     strategy:
       matrix:
+        os:
+          - ubuntu-latest
+        java:
+          - 17
+        #  - 21
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ vars.MYSQL_TEST_DATABASE }}
+        ports:
+          - 3306:3306
+        options:
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Check out Code
+        uses: actions/checkout@v4
+
+      - name: Set up java
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{matrix.java}}
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Build
+        run: mvn -B clean package -DskipTests
+
+      - name: Run Tests
+        run: mvn -B test
+
+        env:
+          DB_URL: ${{ vars.SPRING_DATASOURCE_URL }}
+          DB_USERNAME: ${{ vars.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
