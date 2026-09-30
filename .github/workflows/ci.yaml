@@ -12,87 +12,55 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
 
-    #Used by GitHub Container Registry
-#    permissions:
-#      contents: read
-#      packages: write
+#    Used by GitHub Container Registry
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-        java:
-          - 17
-        #  - 21
-
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          MYSQL_DATABASE: ${{ vars.MYSQL_TEST_DATABASE }}
-        ports:
-          - 3306:3306
-        options:
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-    steps:
-      - name: Check out Code
-        uses: actions/checkout@v4
-
-      - name: Set up java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{matrix.java}}
-          distribution: "temurin"
-          cache: "maven"
-
-      - name: Build
-        run: mvn -B clean package -DskipTests
-
-      - name: Run Tests
-        run: mvn -B test
-
-        env:
-          DB_URL: ${{ vars.SPRING_DATASOURCE_URL }}
-          DB_USERNAME: ${{ vars.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
-      - name: Build and push to Docker Hub
-        if: github.event_name == 'push'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.run_number }}
-            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.sha }}
-            ${{ vars.DOCKER_USERNAME }}/customer-service:latest
-
-#      - name: Log in to GitHub Container Registry (GHCR)
+#      - name: Log in to Docker Hub
+#        if: github.event_name == 'push'
 #        uses: docker/login-action@v3
 #        with:
-#          registry: ghcr.io
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
+#          username: ${{ vars.DOCKER_USERNAME }}
+#          password: ${{ secrets.DOCKER_TOKEN }}
 #
-#      - name: Build and push to GitHub Container Registry
+#      - name: Build and push to Docker Hub
+#        if: github.event_name == 'push'
 #        uses: docker/build-push-action@v6
 #        with:
 #          context: .
 #          push: true
 #          tags: |
-#            ghcr.io/${{ github.repository_owner }}/customer-service:v${{ github.run_number }}
-#            ghcr.io/${{ github.repository_owner }}/customer-service:latest
+#            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.run_number }}
+#            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.sha }}
+#            ${{ vars.DOCKER_USERNAME }}/customer-service:latest
 
+      - name: Log in to GitHub Container Registry (GHCR)
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push to GitHub Container Registry
+        if: github.event_name == 'push'
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/customer-service:v${{ github.run_number }}
+            ghcr.io/${{ github.repository_owner }}/customer-service:v${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/customer-service:latest
+            
+      - name: Print image digest
+        run: |
+          echo "Image digest is: ${{ steps.build.outputs.digest }}"
+          echo "Full image path: ghcr.io/${{ github.repository_owner }}/customer-service@${{ steps.build.outputs.digest }}"

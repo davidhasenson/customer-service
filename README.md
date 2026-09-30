@@ -115,6 +115,27 @@ Projektet använder GitHub Flow som arbetsflöde för versionshantering och sama
 
 Direkta commits till `main` ska undvikas. All utveckling sker i separata branches och integreras genom Pull Requests.
 
+### Motivering till val av branch-strategi
+
+Vi har valt **GitHub Flow** som branch-strategi för detta projekt, framför alternativ som Git Flow. Detta baseras på följande faktorer:
+
+**Redan etablerat arbetssätt i gruppen**
+Gruppens medlemmar har sedan tidigare kurser (bl.a. Backend 1 och Backend 2) mer eller mindre redan arbetat enligt principerna i GitHub Flow, utan att uttryckligen ha namngett eller definierat det som en formell strategi. Att fortsätta med samma grundläggande arbetssätt, nu med tydligare struktur och namngivningsstandard, gjorde övergången enkel och naturlig för hela gruppen.
+
+**Liten grupp och kort projekttid**
+Vi är tre utvecklare som arbetar tillsammans under en begränsad tidsperiod. GitHub Flow är enkelt att förstå och kräver inte lika mycket administration som Git Flow, som normalt innehåller flera permanenta branches (t.ex. `develop`, `release`, `hotfix`) utöver `main`. För ett projekt av vår storlek skulle den extra komplexiteten inte ge något mervärde, utan bara öka risken för missförstånd i gruppen.
+
+**Kontinuerlig leverans till staging och production**
+Vårt deploymentflöde bygger på att samma Docker-image ska kunna verifieras i staging och sedan släppas till production (build once, deploy multiple times). GitHub Flow passar naturligt ihop med detta arbetssätt, eftersom varje merge till `main` automatiskt kan triggra en ny build och deployment till staging, utan att behöva vänta på en separat release-branch.
+
+**Enkel spårbarhet**
+Med en enda långlivad branch (`main`) och korta feature-branches blir det tydligt vilken kod som är aktuell. Alla ändringar går via review och Pull Requests, vilket säkerställer kodgranskning och att CI-kontroller körs innan något når `main`.
+
+**Snabb feedback**
+Eftersom branches är kortlivade och mergas in ofta, minskar risken för stora och svårlösta merge-konflikter jämfört med om utveckling hade skett i långlivade parallella branches under en längre tid.
+
+Sammanfattningsvis passar GitHub Flow gruppens redan etablerade arbetssätt, projektets storlek och tidsram, samt behovet av kontinuerlig integration och leverans.
+
 ### GitHub Projects
 
 Projektets tickets hanteras i en **GitHub Project** som används som Kanban-tavla. Tavlan används för att planera arbetet och följa en ticket från planering till färdig implementation.
@@ -309,6 +330,17 @@ Branch-namnet består av tre delar:
 6. En branch ska i normalfallet avse en avgränsad uppgift.
 7. Branch-namnet ska följa formatet även när ticketen saknar ett separat projektnamn eller prefix.
 
+
+## Hantering av merge-konflikt
+
+Under arbetet skapades en medveten merge-konflikt i `.github/workflows/ci.yaml` (rad 83) för att öva på konflikthantering i Git, som ett samarbete mellan alla gruppmedlemmar.
+
+**Orsak:**
+En gruppmedlem skapade och mergade sin branch till `master` först. En annan gruppmedlems branch hade under tiden ändrat samma rad i samma fil, vilket gjorde att en konflikt uppstod när den branchen skulle mergas in, eftersom `master` redan innehöll den första ändringen.
+
+**Lösning:**
+En tredje gruppmedlem hjälpte till att lösa konflikten genom att merga in `master` i den konfliktande branchen och manuellt välja rätt version av den ändrade raden. Efter att ändringen pushats kördes CI-kontrollerna (GitHub Actions) igen för att säkerställa att allt fortfarande fungerade. När checkarna gått igenom godkändes PR:n av en gruppmedlem, och mergen in i `master` genomfördes sedan av en annan gruppmedlem — ingen mergade sin egen PR.
+Detta visade praktiskt hur man löser en konflikt i samarbete, verifierar lösningen med CI, och säkerställer att fler än en person är involverad i granskning och merge innan en konfliktlösning går in i `master`.
 ---
 
 ## Deploymentflöde
