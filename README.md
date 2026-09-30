@@ -341,6 +341,7 @@ En gruppmedlem skapade och mergade sin branch till `master` först. En annan gru
 **Lösning:**
 En tredje gruppmedlem hjälpte till att lösa konflikten genom att merga in `master` i den konfliktande branchen och manuellt välja rätt version av den ändrade raden. Efter att ändringen pushats kördes CI-kontrollerna (GitHub Actions) igen för att säkerställa att allt fortfarande fungerade. När checkarna gått igenom godkändes PR:n av en gruppmedlem, och mergen in i `master` genomfördes sedan av en annan gruppmedlem — ingen mergade sin egen PR.
 Detta visade praktiskt hur man löser en konflikt i samarbete, verifierar lösningen med CI, och säkerställer att fler än en person är involverad i granskning och merge innan en konfliktlösning går in i `master`.
+
 ---
 
 ## Deploymentflöde
