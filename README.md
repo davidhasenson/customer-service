@@ -6,6 +6,13 @@ Del av ett mikrotjänstsystem (3 tjänster totalt) för ett bokningssystem. Den 
 - [`pensionat-app`](../pensionat-app) – rum och bokningar (port 8083).
 - [`review-service`](../review-service) – recensioner av rum (port 8082).
 
+## Deployad tjänst
+
+| Miljö | URL | Health check |
+|---|---|---|
+| Production | https://customer-service-production-1ad5.up.railway.app | [/actuator/health](https://customer-service-production-1ad5.up.railway.app/actuator/health) |
+| Staging | https://customer-service-staging-3344.up.railway.app | [/actuator/health](https://customer-service-staging-3344.up.railway.app/actuator/health) |
+
 ## Vad tjänsten gör
 
 - **Kundregister** – skapa, hämta, uppdatera och ta bort kunder (`/api/customers`).
@@ -227,6 +234,14 @@ main
 ```
 
 Direkta commits till `main` är inte tillåtna. All förändring ska gå via en Pull Request.
+
+### Skyddad huvudbranch
+
+Huvudbranchen (`master` i detta repo, motsvarar `main` i texten ovan) är skyddad med branch protection:
+
+* Pull Request krävs, ingen kan pusha direkt.
+* Minst 1 godkännande från en annan gruppmedlem.
+* CI måste vara grön innan merge.
 
 **1. Synkronisera med `main`**
 
