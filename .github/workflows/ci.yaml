@@ -112,7 +112,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata and taggs for Docker image
+      - name: Extract metadata and tags for Docker image
 #        if: github.event_name != 'pull_request'
         id: meta
         uses: docker/metadata-action@v5
