@@ -1,21 +1,30 @@
-name: CI with integration tests
+name: CI/CD Pipeline # Build once, Deploy anywhere
 
 on:
   push:
     branches:
-    - master
+      - master
+    tags:
+      - 'v*.*.*'
   pull_request:
     branches:
-    - master
+      - master
+  workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# -------------------------------------------------------------
+# JOB 1: BUILD AND TEST
+# -------------------------------------------------------------
 jobs:
-  build:
+  build-and-test:
     runs-on: ${{ matrix.os }}
-
-#    Used by GitHub Container Registry
-    permissions:
-      contents: read
-      packages: write
 
     strategy:
       matrix:
@@ -40,7 +49,7 @@ jobs:
           --health-retries=10
 
     steps:
-      - name: Check out Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up java
@@ -55,52 +64,124 @@ jobs:
 
       - name: Run Tests
         run: mvn -B test
-
         env:
           DB_URL: ${{ vars.SPRING_DATASOURCE_URL }}
           DB_USERNAME: ${{ vars.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
-#      - name: Log in to Docker Hub
-#        if: github.event_name == 'push'
-#        uses: docker/login-action@v3
-#        with:
-#          username: ${{ vars.DOCKER_USERNAME }}
-#          password: ${{ secrets.DOCKER_TOKEN }}
-#
-#      - name: Build and push to Docker Hub
-#        if: github.event_name == 'push'
-#        uses: docker/build-push-action@v6
-#        with:
-#          context: .
-#          push: true
-#          tags: |
-#            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.run_number }}
-#            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.sha }}
-#            ${{ vars.DOCKER_USERNAME }}/customer-service:latest
+  # -------------------------------------------------------------
+  # JOB 2: BUILD AND PUSH DOCKER IMAGE TO CONTAINER REGISTRY
+  # -------------------------------------------------------------
+  push-to-container-registry:
+    needs: build-and-test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+
+      #      - name: Log in to Docker Hub
+      #        if: github.event_name == 'push'
+      #        uses: docker/login-action@v3
+      #        with:
+      #          username: ${{ vars.DOCKER_USERNAME }}
+      #          password: ${{ secrets.DOCKER_TOKEN }}
+      #
+      #      - name: Build and push to Docker Hub
+      #        if: github.event_name == 'push'
+      #        uses: docker/build-push-action@v6
+      #        with:
+      #          context: .
+      #          push: true
+      #          tags: |
+      #            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.run_number }}
+      #            ${{ vars.DOCKER_USERNAME }}/customer-service:v${{ github.sha }}
+      #            ${{ vars.DOCKER_USERNAME }}/customer-service:latest
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Log in to GitHub Container Registry (GHCR)
-        if: github.event_name == 'push'
+#        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push to GitHub Container Registry
-        if: github.event_name == 'push'
+      - name: Extract metadata and tags for Docker image
+#        if: github.event_name != 'pull_request'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Build and push Docker image to GitHub Container Registry
+#        if: github.event_name != 'pull_request'
         id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/customer-service:build${{ github.run_number }}
-            ghcr.io/${{ github.repository_owner }}/customer-service:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/customer-service:latest
-            
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      #          tags: |
+      #            ghcr.io/${{ github.repository_owner }}/customer-service:build${{ github.run_number }}
+      #            ghcr.io/${{ github.repository_owner }}/customer-service:${{ github.sha }}
+      #            ghcr.io/${{ github.repository_owner }}/customer-service:latest
+
       - name: Print image digest
+#        if: github.event_name != 'pull_request'
         run: |
           echo "Image digest is: ${{ steps.build.outputs.digest }}"
-          echo "Full image path: ghcr.io/${{ github.repository_owner }}/customer-service@${{ steps.build.outputs.digest }}"
+          echo "Full image path: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
+
+# -------------------------------------------------------------
+# JOB 3: DEPLOY TO STAGING (Automatic on push to master)
+# -------------------------------------------------------------
+  deploy-staging:
+    needs: push-to-container-registry
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+        run: |
+          railway deploy \
+            --service customer-service \
+            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}
+
+# -------------------------------------------------------------
+# JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
+# -------------------------------------------------------------
+  deploy-production:
+    needs: push-to-container-registry
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
+        run: |
+          railway deploy \
+            --service customer-service \
+            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}
+
+
