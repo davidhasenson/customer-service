@@ -359,20 +359,28 @@ Detta visade praktiskt hur man löser en konflikt i samarbete, verifierar lösni
 
 ---
 
-## Deploymentflöde
+## Deploymentflöde (Railway & GitHub Actions)
 
-Tjänsten har två miljöer:
+Tjänsten deployas till **Railway** i två separata miljöer:
 
-* **Staging** – används för verifiering och testning innan release till produktion.
-* **Production** – den miljö där den skarpa tjänsten körs.
+- **Staging** – automatisk miljö för verifiering och integrationstestning vid varje godkänd ändring i `master`.
+- **Production** – den skarpa miljön där tjänsten körs för användare.
 
-Docker-images byggs och publiceras till **GitHub Container Registry (GHCR)**. Samma Docker-image används sedan i både staging och production. Det som skiljer miljöerna åt är framför allt miljövariabler och annan miljöspecifik konfiguration.
+Pipeline-strukturen bygger på principen **Build once, deploy multiple times**. En Docker-image byggs och publiceras en gång till **GitHub Container Registry (GHCR)**. Samma exakta image (identifierad via sitt **image digest**) deployas sedan till både Staging och Production på Railway. Miljöerna skiljer sig enbart åt genom sina miljövariabler (`RAILWAY_STAGING_TOKEN` vs `RAILWAY_PRODUCTION_TOKEN`, databaslänkar osv.).
 
-Det innebär att vi använder principen **build once, deploy multiple times**: en image byggs en gång och samma image används genom hela releaseflödet.
+### Pipeline-jobb (Separation of Concerns)
 
-### Deploymentflöde
+Workflowet i GitHub Actions är uppdelat i fyra fristående och modulariserade jobb:
+
+- `build-and-test`: Sätter upp Java, startar en MySQL-servicecontainer, bygger applikationen med Maven och kör alla testerna.
+- `push-to-container-registry`: Körs endast vid push/merge (ej vid PR). Bygger Docker-imagen, taggar den via `docker/metadata-action` och pushar den till GHCR. Jobbet genererar och skickar vidare ett unikt `image_digest.
+- `deploy-staging`: Körs automatiskt vid push till `master`. Installerar Railway CLI och deployar imagen via `image_digest` till Staging-miljön på Railway.
+- `deploy-production`: Körs manuellt via `workflow_dispatch` eller automatiskt vid skapande av en Git-tagg (`v*.*.*`). Deployar samma `image_digest` till Production-miljön på Railway.
+
+### Översiktsdiagram över deploymentflödet
 
 ```text
+
 ┌─────────────────┐
 │  Feature branch │
 └────────┬────────┘
@@ -380,102 +388,83 @@ Det innebär att vi använder principen **build once, deploy multiple times**: e
          │ Pull Request
          ▼
 ┌─────────────────┐
-│      main       │
+│     master      │
 └────────┬────────┘
          │
-         │ Merge
+         │ Merge / Push
          ▼
-┌─────────────────┐
-│ GitHub Actions  │
-│ Build Docker    │
-│ image           │
-└────────┬────────┘
+┌─────────────────────────────────┐
+│ GitHub Actions (build-and-test) │
+│  - Maven build & JUnit tests    │
+│  - MySQL service container      │
+└────────┬────────────────────────┘
          │
-         │ Push
+         │ Success
          ▼
-┌─────────────────┐
-│      GHCR       │
-│                 │
-│ Docker image    │
-└────────┬────────┘
+┌──────────────────────────────────┐
+│  push-to-container-registry      │
+│  - Build Docker image            │
+│  - Push to GHCR                  │
+│  - Output: image_digest          │
+└────────┬─────────────────────────┘
          │
          │ Automatic deployment
          ▼
-┌─────────────────┐
-│     Staging     │
-│                 │
-│ Image +         │
-│ staging env     │
-└────────┬────────┘
+┌──────────────────────────────────┐
+│ deploy-staging (Railway)         │
+│  - Image: GHCR @ image_digest    │
+│  - Env: Staging config           │
+└────────┬─────────────────────────┘
          │
          │ Verify / Test
          ▼
-┌────────────────────┐
-│   Release trigger  │
-│                    │
-│ workflow_dispatch  │
-│        eller       │
-│      Git-tag       │
-└──────────┬─────────┘
-           │
-           ▼
-┌─────────────────┐
-│   Production    │
-│                 │
-│ Same image +    │
-│ production env  │
-└─────────────────┘
+┌──────────────────────────────────┐
+│ Release trigger                  │
+│  - workflow_dispatch (manuell)   │
+│    eller                         │
+│  - Git-tag (v*.*.*)              │
+└────────┬─────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────┐
+│ deploy-production (Railway)      │
+│  - Same image: GHCR @ digest     │
+│  - Env: Production config        │
+└──────────────────────────────────┘
 ```
 
-### 1. Merge till `main`
+### Steg för steg
 
-När en Pull Request har blivit godkänd och mergas till `main` triggas GitHub Actions.
+#### 1. Integrationstest i PR & Merge till `master`
 
-Workflowet bygger projektets Docker-image och publicerar den till GHCR.
+När en Pull Request skapas eller uppdateras triggas GitHub Actions och kör jobbet `build-and-test` för att säkerställa att koden kompilerar och att alla tester passerar mot MySQL. När PR:en godkänns och mergas till master startar hela CI/CD-flödet.
 
-### 2. Deployment till staging
+#### 2. Bygg och publicering till GHCR
 
-Efter att Docker-imagen har publicerats till GHCR deployas den automatiskt till staging.
+Jobbet `push-to-container-registry` loggar in i GHCR med `GITHUB_TOKEN`, extraherar metadata och bygger en Docker-image. 
+Bilden publiceras till GHCR och dess unika `image_digest` skickas som output till efterföljande deploy-jobb.
 
-Staging-miljön använder:
+#### 3. Automatisk deployment till Staging
 
-* Samma Docker-image som publicerades till GHCR.
-* Staging-specifika miljövariabler.
-* Staging-specifik konfiguration.
+Så fort bilden finns i GHCR startar jobbet `deploy-staging`:
 
-Exempel:
+- Railway CLI installeras på runnern.
+- Ett **Service Token** (`RAILWAY_STAGING_TOKEN`) används för autentisering.
+- Kommandot `railway deploy` pekar ut tjänsten `customer-service` och laddar in bilden direkt via dess digest:
 
-```text
-GHCR
- │
- │ ghcr.io/<organisation>/<repository>:<tag>
- ▼
-Staging
- │
- ├── IMAGE = ghcr.io/<organisation>/<repository>:<tag>
- ├── DATABASE_URL = staging database
- └── API_URL = staging API
+```bash
+railway deploy \
+  --service customer-service \
+  --image ghcr.io//@sha256:...
 ```
 
-### 3. Verifiering i staging
+#### 4. Deployment till production
 
-När imagen är deployad till staging verifieras ändringen genom automatiska tester och/eller manuell kontroll.
-
-Exempel på kontroller:
-
-* Att applikationen startar korrekt.
-* Att relevanta tester passerar.
-* Att den nya funktionaliteten fungerar.
-* Att befintlig funktionalitet inte har påverkats.
-* Att integrationer fungerar korrekt.
-
-### 4. Deployment till production
-
-När ändringen har verifierats i staging kan samma Docker-image deployas till production.
+När ändringen är verifierad i Staging deployas bilden till Production via antingen en Git-tagg eller en manuell körning i GitHub Actions:
 
 Deployment till production sker via en explicit release-trigger:
 
-* **Manuell trigger** med `workflow_dispatch`.
+* **Manuell trigger** med `workflow_dispatch`. Välj workflowet i GitHub Actions och klicka på **Run workflow**.
 * **Git-tag** som representerar en release.
 
 Exempel:
@@ -485,30 +474,7 @@ git tag v1.2.0
 git push origin v1.2.0
 ```
 
-Production använder samma image från GHCR som staging använde.
-
-```text
-GHCR
- │
- │ ghcr.io/<organisation>/<repository>:<tag>
- ├──────────────────────► Staging
- │
- └──────────────────────► Production
-```
-
-Det som skiljer production från staging är miljöspecifik konfiguration och miljövariabler.
-
-```text
-Staging:
-  IMAGE = ghcr.io/<organisation>/<repository>:<tag>
-  DATABASE_URL = staging database
-  API_URL = staging API
-
-Production:
-  IMAGE = ghcr.io/<organisation>/<repository>:<tag>
-  DATABASE_URL = production database
-  API_URL = production API
-```
+Production-miljön på Railway uppdateras med exakt samma image_digest som staging via RAILWAY_PRODUCTION_TOKEN.
 
 ## Docker image-taggar
 
@@ -516,7 +482,7 @@ Docker images publiceras till **GitHub Container Registry (GHCR)** och identifie
 
 ```text
 ghcr.io/<organisation>/<repository>:build142
-ghcr.io/<organisation>/<repository>:8f3a21c
+ghcr.io/<organisation>/<repository>:sha-8f3a21c
 ghcr.io/<organisation>/<repository>:v1.1.1
 ghcr.io/<organisation>/<repository>:latest
 ghcr.io/<organisation>/<repository>@sha256:abc123...
@@ -524,23 +490,11 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 
 | Tag / Identifierare | Betydelse                                 |
 | ------------------- | ----------------------------------------- |
-| `build142`          | GitHub Actions build number               |
-| `8f3a21c`           | Commit SHA som imagen byggdes från        |
+| `sha-8f3a21c`       | Commit SHA som imagen byggdes från        |
+| `latest`            | Huvudgrenen som imagen har byggts ifrån   |
 | `v1.1.1`            | Semantisk releaseversion                  |
 | `latest`            | Senaste publicerade image                 |
 | `@sha256:...`       | Image digest som identifierar exakt image |
-
-### Build number
-
-`v${{ github.run_number }}` används som ett lättläst build-nummer.
-
-Exempel:
-
-```text
-build142
-```
-
-Det betyder att imagen kommer från workflow run nummer `142`. Detta ska inte betraktas som applikationens releaseversion, utan som ett identifierbart build-nummer.
 
 ### Commit SHA
 
@@ -549,7 +503,7 @@ Det betyder att imagen kommer från workflow run nummer `142`. Detta ska inte be
 Exempel:
 
 ```text
-8f3a21c...
+sha-8f3a21c
 ```
 
 Det gör det möjligt att spåra exakt vilken kodversion som finns i en Docker-image.
@@ -561,24 +515,23 @@ En semantisk releaseversion, exempelvis `v1.1.1`, används för att identifiera 
 Exempel:
 
 ```text
-v1.1.1
+v1.2.0
 ```
 
-Det betyder att imagen tillhör release `1.1.1`. Releaseversionen ska skiljas från build-numret, som endast identifierar det workflow run som skapade imagen.
-
-En releaseversion bör behandlas som **immutable**, vilket innebär att samma release-tag inte ska flyttas till en annan image efter att releasen har skapats.
+En releaseversion bör behandlas som **immutable**, vilket innebär att samma release-tag inte ska flyttas till en annanimage efter att releasen har skapats.
 
 En releaseversion kan läggas till på en redan skapad image utan att imagen behöver byggas om.
 
-### Latest
+### Latest & Branch-tags (`master`, `latest`)
 
-`latest` används som en enkel referens till den senast publicerade imagen.
+`master` och `latest` används som enkla referenser till de senast publicerade imagen från huvudgrenen.
 
 ```text
+ghcr.io/<organisation>/<repository>:master
 ghcr.io/<organisation>/<repository>:latest
 ```
 
-`latest` ska **inte användas som deployment-referens** för staging eller production eftersom taggen kan flyttas till en ny image.
+Dessa taggar ska **inte användas som deployment-referens** för staging eller production eftersom taggarna är rörliga och kan flyttas till en nyare image över tid.
 
 ### Image digest
 
@@ -596,7 +549,8 @@ En image kan refereras med sitt digest direkt i GHCR:
 ghcr.io/<organisation>/<repository>@sha256:abc123...
 ```
 
-Det gör det möjligt att säkerställa att exakt samma Docker-image används vid deployment till Staging och Production. Till skillnad från en tagg som `latest` pekar ett digest alltid på det specifika image-innehåll som identifierats av digestet.
+Det gör det möjligt att säkerställa att exakt samma Docker-image används vid deployment till Staging och Production. 
+Till skillnad från en tagg som `latest` och `maste` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digestet.
 
 ### Deployment
 
@@ -609,57 +563,48 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 Samma image används sedan i både staging och production.
 
 ```text
-                     GHCR
-                       │
-          ┌────────────┼────────────┼────────────┐
-          │            │            │            │
-          ▼            ▼            ▼            ▼
- @sha256:abc123... :build142    :8f3a21c     :latest
-          │            │            │            │
-          │            │            │            └── Latest image
-          │            │            │
-          │            │            └── Commit SHA
-          │            │
-          │            └── Build number
-          │
-          └── Image digest
-          │
-          ▼
-       Staging
-          │
-          │ Verification
-          ▼
-     Release trigger
-          │
-          └── v1.2.0
-          │
-          ▼
-      Production
-          │
-          └── @sha256:abc123...
+                    GHCR
+                      │
+         ┌────────────┼────────────┼────────────┐
+         │            │            │            │
+         ▼            ▼            ▼            ▼
+ @sha256:abc123... :sha-8f3a21c  :master      :latest
+         │            │            │            │
+         │            │            │            └── Latest image
+         │            │            │
+         │            │            └── Branch tag
+         │            │
+         │            └── Commit SHA
+         │
+         └── Image digest (Immutable)
+         │
+         ▼
+      Staging
+         │
+         │ Verification
+         ▼
+    Release trigger
+         │
+         └── Tag: v1.2.0
+         │
+         ▼
+     Production
+         │
+         └── Deployment: @sha256:abc123...
+
+          
 ```
 
 På så sätt kan samma Docker-image verifieras i staging och därefter deployas till production utan att imagen behöver byggas om. Image digest används alltid som deployment-referens.
 
-Docker-tags kan fortfarande användas för att identifiera och hitta images i GHCR. Exempelvis kan en image ha följande tags:
+Docker-tags kan fortfarande användas för att söka och identifiera images i GHCR. Följande identifierare kan alltså peka på en och samma image:
 
 ```text
-ghcr.io/<organisation>/<repository>:build142
-ghcr.io/<organisation>/<repository>:8f3a21c
-ghcr.io/<organisation>/<repository>:v1.2.0
-ghcr.io/<organisation>/<repository>:latest
-```
-
-Dessa tags används som metadata och referenser till imagen.
-
-Då kan följande identifierare finnas för samma image:
-
-```text
-:build142
-:8f3a21c
+:sha-8f3a21c
+:master
 :v1.2.0
 :latest
 @sha256:abc123...
 ```
 
-Där `build142` är build-numret, `8f3a21c` identifierar committen, `v1.2.0` är releaseversionen, `latest` pekar på den senaste publicerade imagen och `@sha256:abc123...` identifierar exakt image-innehåll och används vid deployment.
+Där sha-8f3a21c identifierar committen, master är källgrenen, v1.2.0 är releaseversionen, latest pekar på den senast publicerade imagen och @sha256:abc123... identifierar exakt image-innehåll och används vid faktiska deployments.
