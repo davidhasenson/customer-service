@@ -112,9 +112,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: | 
-            ${{ steps.meta.outputs.tags }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Print image digest
@@ -131,42 +129,25 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Redeploy with image digest
+      - name: Push image to Staging GHCR Repository
         run: |
-          DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
-          IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
-    
-          echo "Deploying: ${IMAGE_WITH_DIGEST}"
-    
-          npx -y @railway/cli@latest service update \
-          --service customer-service \
-          --source.image="${IMAGE_WITH_DIGEST}"
+          ORIGINAL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}"
+          STAGING_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-staging"
           
-          npx -y @railway/cli@latest redeploy \
-          --service customer-service \
-          --yes
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_ENVIRONMENT_NAME: staging
-
-#optoin 2 not tested
-#
-#    - name: Deploy to Railway with Image Digest
-#      run: |
-#        DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
-#        IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
-#        SERVICE_ID="${{ secrets.RAILWAY_SERVICE_ID }}"
-#        echo "Deploying image: ${IMAGE_WITH_DIGEST}"
-#        echo "Service ID: ${SERVICE_ID}"
-#
-#        curl -v -X POST https://api.railway.app/graphql \
-#        -H "Content-Type: application/json" \
-#        -H "Authorization: Bearer ${{ secrets.RAILWAY_API_TOKEN }}" \
-#        -d "{\"query\": \"mutation { serviceInstanceUpdate(id: \\\"${SERVICE_ID}\\\", input: {source: {image: \\\"${IMAGE_WITH_DIGEST}\\\"}}) { id } }\"}"
+          docker pull $ORIGINAL_IMAGE
+          
+          docker tag $ORIGINAL_IMAGE ${STAGING_IMAGE}:latest
+          docker tag $ORIGINAL_IMAGE ${STAGING_IMAGE}:${{ github.sha }}
+          
+          docker push ${STAGING_IMAGE}:latest
+          docker push ${STAGING_IMAGE}:${{ github.sha }}
 
 #option 3 working
 #      - name: Deployment to railway
@@ -179,19 +160,32 @@ jobs:
 # -------------------------------------------------------------
 # JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
 # -------------------------------------------------------------
-#  deploy-production:
-#    needs: push-to-container-registry
-#    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-#    runs-on: ubuntu-latest
-#    environment: production
+  deploy-production:
+    needs: push-to-container-registry
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
 
+    steps:
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Deployment to railway
-#        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
-#        env:
-#          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
-
-
+      - name: Push image to Production GHCR Repository
+        run: |
+          ORIGINAL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}"
+          PROD_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
+          
+          docker pull $ORIGINAL_IMAGE
+          
+          docker tag $ORIGINAL_IMAGE ${PROD_IMAGE}:latest
+          docker tag $ORIGINAL_IMAGE ${PROD_IMAGE}:${{ github.ref_name }}
+          
+          docker push ${PROD_IMAGE}:latest
+          docker push ${PROD_IMAGE}:${{ github.ref_name }}
 
 
 
