@@ -159,10 +159,11 @@ jobs:
       - name: Deploy to Railway Staging
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
-          RAILWAY_SERVICE: customer-service
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}
         run: |
-          railway deploy \
-            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}
+          railway service source connect \
+            --image "$IMAGE" \
+            --service customer-service
 
 # -------------------------------------------------------------
 # JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
