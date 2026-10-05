@@ -130,22 +130,26 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+#      - name: Install Railway CLI
+#        run: npm install -g @railway/cli
+#
+#      - name: test token
+#        run: |
+#          export RAILWAY_TOKEN=${{ secrets.RAILWAY_STAGING_TOKEN }}
+#          railway whoami
+#
+#      - name: Deploy to Railway
+#        run: |
+#          railway service redeploy --service customer-service
+#        env:
+#          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+#          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+#          RAILWAY_ENVIRONMENT_NAME: staging
 
-      - name: test token
-        run: |
-          export RAILWAY_TOKEN=${{ secrets.RAILWAY_STAGING_TOKEN }}
-          railway whoami
-
-      - name: Deploy to Railway
-        run: |
-          railway service redeploy --service customer-service
+      - name: Deployment to railway
+        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_ENVIRONMENT_NAME: staging
-
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
 
 
 
