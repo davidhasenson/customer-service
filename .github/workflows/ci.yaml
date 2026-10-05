@@ -147,7 +147,7 @@ jobs:
 #          RAILWAY_ENVIRONMENT_NAME: staging
 
       - name: Deployment to railway
-        run: npx -y @railway/cli@latest redeploy --customer-service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
+        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
 
