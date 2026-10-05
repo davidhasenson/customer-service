@@ -149,8 +149,20 @@ jobs:
 # -------------------------------------------------------------
 # JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
 # -------------------------------------------------------------
-  deploy-production:
-    needs: push-to-container-registry
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    environment: production
+#  deploy-production:
+#    needs: push-to-container-registry
+#    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+#    runs-on: ubuntu-latest
+#    environment: production
+
+
+
+
+
+
+
+
+
+
+
+
