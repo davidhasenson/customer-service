@@ -10,6 +10,12 @@ on:
     branches:
       - master
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Ange image-tagg/SHA att deploya (t.ex. v1.0.0, latest eller a1b2c3d)'
+        required: true
+        default: 'latest'
+        type: string
 
 permissions:
   contents: read
@@ -172,16 +178,24 @@ jobs:
 
       - name: Push image to Production GHCR Repository
         run: |
-          ORIGINAL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}"
+          CHOSEN_TAG="${{ inputs.image_tag }}"
+          
+          echo "Hämtar image med tagg: $CHOSEN_TAG"
+          
+          SOURCE_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$CHOSEN_TAG"
           PROD_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
           
           docker pull $ORIGINAL_IMAGE
           
           docker tag $ORIGINAL_IMAGE ${PROD_IMAGE}:latest
-          docker tag $ORIGINAL_IMAGE ${PROD_IMAGE}:${{ github.ref_name }}
           
           docker push ${PROD_IMAGE}:latest
-          docker push ${PROD_IMAGE}:${{ github.ref_name }}
+
+      - name: Deployment to railway
+        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+
 
 
 
