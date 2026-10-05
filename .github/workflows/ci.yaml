@@ -150,11 +150,11 @@ jobs:
           docker push ${STAGING_IMAGE}:${{ github.sha }}
 
 #option 3 working
-#      - name: Deployment to railway
-#        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
-#        env:
-#          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
-#
+      - name: Deployment to railway
+        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+
 
 # -------------------------------------------------------------
 # JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
