@@ -82,7 +82,6 @@ jobs:
       image_digest: ${{ steps.build.outputs.digest }}
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -101,6 +100,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=latest
             type=sha,format=short
             type=ref,event=branch
             type=ref,event=tag
@@ -156,7 +156,6 @@ jobs:
 #          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
 #
 
-
 # -------------------------------------------------------------
 # JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
 # -------------------------------------------------------------
@@ -186,13 +185,6 @@ jobs:
           
           docker push ${PROD_IMAGE}:latest
           docker push ${PROD_IMAGE}:${{ github.ref_name }}
-
-
-
-
-
-
-
 
 
 
