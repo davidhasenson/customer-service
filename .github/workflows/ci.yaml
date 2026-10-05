@@ -135,21 +135,16 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Railway Redeploy with Image Digest
-    run: |
-      DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
-      IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
 
-    echo "Deploying image: ${IMAGE_WITH_DIGEST}"
-
-      curl -X POST https://api.railway.app/graphql \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
-      -d "{
-    \"query\":
-      \"mutation { serviceInstanceUpdate(id:
-        \\\"3b7b8949-96ed-434d-8726-c6a610a64612\\\", input: { source: { image: \\\"${ IMAGE_WITH_DIGEST }\\\" } }) { id } }\"}"
-
+      - name: Deploy to Railway
+        run: |
+          railway service redeploy --service customer-service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_NAME: staging
 
 # -------------------------------------------------------------
 # JOB 4: DEPLOY TO PRODUCTION (Manual trigger or Git tag)
@@ -159,20 +154,3 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
-    steps:
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway Production
-
-      - name: Trigger Railway Redeploy with Digest
-        run: |
-          DIGEST="${{ steps.push.outputs.digest }}"
-          IMAGE_WITH_DIGEST="ghcr.io/davidhasenson/customer-service@${DIGEST}"
-          
-          curl -X POST https://api.railway.app/graphql \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
-            -d "{
-              \"query\": \"mutation { serviceInstanceUpdate(id: \\\"3b7b8949-96ed-434d-8726-c6a610a64612\\\", input: {source: {image: \\\"${IMAGE_WITH_DIGEST}\\\"}}) { id } }\"
-            }"
