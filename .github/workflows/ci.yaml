@@ -113,7 +113,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: | 
+            ${{ steps.meta.outputs.tags }}
+            ghcr.io/${{ github.repository_owner }}/customer-service:latest
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Print image digest
@@ -155,17 +157,18 @@ jobs:
 
 #optoin 2 not tested
 #
-      - name: Deploy to Railway with Image Digest
-        run: |
-          DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
-          IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
-          echo "Deploying image: ${IMAGE_WITH_DIGEST}"
-          
-          curl -X POST https://api.railway.app/graphql \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ secrets.RAILWAY_API_TOKEN }}" \
-          -d "{\"query\": \"mutation { serviceInstanceUpdate(id: \\\"${{ secrets.RAILWAY_SERVICE_ID }}\\\", input: {source: {image: \\\"${IMAGE_WITH_DIGEST}\\\"}}) { id } }\"}"
-#
+    - name: Deploy to Railway with Image Digest
+      run: |
+        DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
+        IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+        SERVICE_ID="${{ secrets.RAILWAY_SERVICE_ID }}"
+        echo "Deploying image: ${IMAGE_WITH_DIGEST}"
+        echo "Service ID: ${SERVICE_ID}"
+        
+        curl -v -X POST https://api.railway.app/graphql \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${{ secrets.RAILWAY_API_TOKEN }}" \
+        -d "{\"query\": \"mutation { serviceInstanceUpdate(id: \\\"${SERVICE_ID}\\\", input: {source: {image: \\\"${IMAGE_WITH_DIGEST}\\\"}}) { id } }\"}"
 
 #option 3 working
 #      - name: Deployment to railway
