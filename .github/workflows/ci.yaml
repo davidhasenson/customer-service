@@ -135,7 +135,7 @@ jobs:
 
       - name: test token
         run: |
-          export RAILWAY_TOKEN=<your-token>
+          export RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}
           railway whoami
 
       - name: Deploy to Railway
