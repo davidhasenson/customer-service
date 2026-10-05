@@ -134,11 +134,6 @@ jobs:
 #      - name: Install Railway CLI
 #        run: npm install -g @railway/cli
 #
-##      - name: test token
-##        run: |
-##          export RAILWAY_TOKEN=${{ secrets.RAILWAY_API_TOKEN }}
-##          railway whoami
-#
 #      - name: Update service image
 #        run: |
 #          DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
@@ -159,34 +154,25 @@ jobs:
 #          RAILWAY_ENVIRONMENT_NAME: staging
 
 #optoin 2 not tested
-
-#      - name: Deploy to Railway with Image Digest
-#        run: |
-#          DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
-#          IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.push-to-container-registry.outputs.image_digest }}"
 #
-#          echo "Deploying image: ${IMAGE_WITH_DIGEST}"
+      - name: Deploy to Railway with Image Digest
+        run: |
+          DIGEST="${{ needs.push-to-container-registry.outputs.image_digest }}"
+          IMAGE_WITH_DIGEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${DIGEST}"
+          echo "Deploying image: ${IMAGE_WITH_DIGEST}"
+          
+          curl -X POST https://api.railway.app/graphql \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.RAILWAY_API_TOKEN }}" \
+          -d "{\"query\": \"mutation { serviceInstanceUpdate(id: \\\"${{ secrets.RAILWAY_SERVICE_ID }}\\\", input: {source: {image: \\\"${IMAGE_WITH_DIGEST}\\\"}}) { id } }\"}"
 #
-#          curl -X POST https://api.railway.app/graphql \
-#          -H "Content-Type: application/json" \
-#          -H "Authorization: Bearer ${{ secrets.RAILWAY_API_TOKEN }}" \
-#          -d "{
-#          \"query\": \"mutation { serviceInstanceUpdate(
-#            id: \\\"${{ secrets.RAILWAY_SERVICE_ID }}\\\",
-#            input: {
-#              source:  {
-#                image: \\\"${IMAGE_WITH_DIGEST}\\\"}}) {
-#                  id }
-#                  }\"
-#                }"
-
 
 #option 3 working
-      - name: Deployment to railway
-        run: npx -y @railway/cli@${{ needs.push-to-container-registry.outputs.image_digest }} redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
-
+#      - name: Deployment to railway
+#        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
+#        env:
+#          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+#
 
 
 # -------------------------------------------------------------
