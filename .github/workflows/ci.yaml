@@ -135,17 +135,16 @@ jobs:
 
       - name: test token
         run: |
-          export RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}
+          export RAILWAY_TOKEN=${{ secrets.RAILWAY_STAGINg_TOKEN }}
           railway whoami
 
       - name: Deploy to Railway
         run: |
           railway service redeploy --service customer-service
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
           RAILWAY_ENVIRONMENT_NAME: staging
-
 
 
 
