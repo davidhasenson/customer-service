@@ -165,7 +165,10 @@ jobs:
 # -------------------------------------------------------------
   deploy-production:
     needs: push-to-container-registry
-    if: !failed() && !cancelled() && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
+    if: | 
+      !failure() && 
+      !cancelled() && 
+       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
 
