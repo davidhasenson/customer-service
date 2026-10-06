@@ -30,7 +30,6 @@ env:
 # -------------------------------------------------------------
 jobs:
   build-and-test:
-    if: !startsWith(github.ref, 'refs/tags/v') || github.event_name != 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -105,7 +104,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-staging
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ github.sha }}
@@ -185,7 +184,7 @@ jobs:
           echo "Hämtar image med tagg: $CHOSEN_TAG"
 
           SOURCE_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$CHOSEN_TAG"
-          PROD_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
+          ORIGINAL_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
 
           docker pull $ORIGINAL_IMAGE
 
