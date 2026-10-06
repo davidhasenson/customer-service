@@ -558,7 +558,7 @@ Deploy till production
 
 **3. Automatisk rollback vid misslyckad deployment** (Production och Staging)
 
-Om en deployment misslyckas kan workflowet automatiskt försöka återställa den senast fungerande versionen.
+Om en deployment misslyckas kan Railway automatiskt försöka återställa den senast fungerande versionen.
 
 Detta kan användas både i **staging och production** för att snabbt återställa tjänsten till en fungerande version.
 
