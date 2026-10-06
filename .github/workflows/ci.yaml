@@ -81,7 +81,7 @@ jobs:
   # JOB 2: BUILD AND PUSH DOCKER IMAGE TO CONTAINER REGISTRY
   # -------------------------------------------------------------
   push-to-container-registry:
-    if: github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
+    if: github.event_name != 'pull_request' || github.event_name != 'workflow_dispatch'
     needs: build-and-test
     runs-on: ubuntu-latest
 
@@ -165,7 +165,10 @@ jobs:
 # -------------------------------------------------------------
   deploy-production:
     needs: push-to-container-registry
-    if: github.event_name == 'workflow_dispatch'
+    if: |
+      !failed() &&
+      !cancelled() &&
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
 
@@ -196,3 +199,4 @@ jobs:
         run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}" --yes
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
+
