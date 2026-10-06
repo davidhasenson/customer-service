@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Ange image-tagg/SHA att deploya (t.ex. v1.0.0, latest eller a1b2c3d)'
+        description: 'Ange image-tagg/SHA att deploya (t.ex. sha-4662254, latest eller a1b2c3d)'
         required: false
         default: 'latest'
         type: string
@@ -201,7 +201,4 @@ jobs:
         run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}" --yes
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
-
-
-
 
