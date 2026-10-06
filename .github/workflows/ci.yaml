@@ -14,7 +14,7 @@ on:
       image_tag:
         description: 'Ange image-tagg/SHA att deploya (t.ex. sha-4662254, latest eller a1b2c3d)'
         required: true
-        default: 'latest'
+        default: ''
         type: string
 
 permissions:
@@ -137,6 +137,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
+#   Option 1 (is working)
 #      - name: Log in to GitHub Container Registry (GHCR)
 #        uses: docker/login-action@v3
 #        with:
@@ -160,7 +161,7 @@ jobs:
 #        env:
 #          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
 
-
+#   Option 2 (is working)
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
@@ -191,6 +192,7 @@ jobs:
     environment: production
 
     steps:
+#   Option 1 (is working)
 #      - name: Log in to GitHub Container Registry (GHCR)
 #        uses: docker/login-action@v3
 #        with:
@@ -218,7 +220,7 @@ jobs:
 #        env:
 #          RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
 
-
+#   Option 2 (is working)
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
