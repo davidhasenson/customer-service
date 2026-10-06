@@ -16,11 +16,11 @@ on:
         required: false
         default: ''
         type: string
-      skip_build:
-        description: 'Hoppa över bygg & push (kör endast deploy)'
-        type: boolean
-        required: false
-        default: false
+#      skip_build:
+#        description: 'Hoppa över bygg & push (kör endast deploy)'
+#        type: boolean
+#        required: false
+#        default: false
 
 permissions:
   contents: read
@@ -35,7 +35,7 @@ env:
 # -------------------------------------------------------------
 jobs:
   build-and-test:
-    if: ${{ !inputs.skip_build }}
+    #if: ${{ !inputs.skip_build }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -86,7 +86,7 @@ jobs:
   # JOB 2: BUILD AND PUSH DOCKER IMAGE TO CONTAINER REGISTRY
   # -------------------------------------------------------------
   push-to-container-registry:
-    if: ${{ !inputs.skip_build }}
+    #if: ${{ !inputs.skip_build }}
     needs: build-and-test
     runs-on: ubuntu-latest
 
