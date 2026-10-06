@@ -162,26 +162,19 @@ jobs:
 
 
       - name: Install Railway CLI
-       # if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: npm install -g @railway/cli
 
-
       - name: Set Railway staging image
-     #   if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
         run: |
-          railway api \'mutation UpdateService($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { 
-              serviceInstanceUpdate(serviceId: $serviceId environmentId: $environmentId input: $input) }' --variables '{"serviceId": "${{ secrets.RRAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}","input":{"source":{"image":"ghcr.io/davidhasenson/customer-service:${{ github.sha }}"}}}'
+          railway api 'mutation UpdateService($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId environmentId: $environmentId input: $input) }' --variables '{"serviceId": "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}","input":{"source":{"image":"ghcr.io/davidhasenson/customer-service:${{ github.sha }}"}}}'
 
       - name: Deploy to staging
-     #   if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN || secrets.RAILWAY_STAGING_TOKEN }}
         run: |
-          railway api \'mutation DeployService($serviceId: String!, $environmentId: String!) { 
-              serviceInstanceDeployV2(serviceId: $serviceId environmentId: $environmentId) }' --variables '{"serviceId":"${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING  }}"}'
-
+          railway api 'mutation DeployService($serviceId: String!, $environmentId: String!) { serviceInstanceDeployV2(serviceId: $serviceId environmentId: $environmentId) }' --variables '{"serviceId":"${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}"}'
 
 
 # -------------------------------------------------------------
