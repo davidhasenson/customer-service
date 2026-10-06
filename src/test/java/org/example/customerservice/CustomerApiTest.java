@@ -85,7 +85,7 @@ public class CustomerApiTest {
         mockMvc.perform(post("/api/customers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest());
     }
 
 
