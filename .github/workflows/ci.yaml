@@ -172,7 +172,7 @@ jobs:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: |
           railway api \'mutation UpdateService($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { 
-              serviceInstanceUpdate(serviceId: $serviceId environmentId: $environmentId input: $input) }' \--variables '{"serviceId": "${{ secrets.RRAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}","input":{"source":{"image":"ghcr.io/davidhasenson/customer-service:${{ github.sha }}"}}}'
+              serviceInstanceUpdate(serviceId: $serviceId environmentId: $environmentId input: $input) }' --variables '{"serviceId": "${{ secrets.RRAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}","input":{"source":{"image":"ghcr.io/davidhasenson/customer-service:${{ github.sha }}"}}}'
 
       - name: Deploy to staging
      #   if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -180,7 +180,7 @@ jobs:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: |
           railway api \'mutation DeployService($serviceId: String!, $environmentId: String!) { 
-              serviceInstanceDeployV2(serviceId: $serviceId environmentId: $environmentId) }' \--variables '{"serviceId":"${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING  }}"}'
+              serviceInstanceDeployV2(serviceId: $serviceId environmentId: $environmentId) }' --variables '{"serviceId":"${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING  }}"}'
 
 
 
