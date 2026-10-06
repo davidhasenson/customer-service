@@ -476,6 +476,124 @@ git push origin v1.2.0
 
 Production-miljön på Railway uppdateras med exakt samma image_digest som staging via RAILWAY_PRODUCTION_TOKEN.
 
+## Rollback
+
+Om en release i production orsakar problem kan tjänsten återställas till en tidigare fungerande version. Rollback innebär att en tidigare verifierad Docker-image deployas igen.
+
+Eftersom Docker-images identifieras med image digest kan vi återgå till exakt samma image som tidigare kördes i production. Ingen ny image behöver byggas.
+
+Rollback kan göras på tre sätt:
+
+**1. Manuell rollback via `workflow_dispatch`** (Produktion)
+
+För produktionsmiljön kan en tidigare image väljas genom att starta production-workflowet manuellt med den tagg eller version som ska återställas.
+
+**Så startar du ett workflow manuellt i GitHub:**
+
+1. Öppna projektets repository på GitHub.
+2. Gå till fliken **Actions**.
+3. Välj det workflow som innehåller production-deployment.
+4. Klicka på **Run workflow**.
+5. Välj branch som workflowet ska köras från.
+6. Ange den image-tag eller version som ska deployas.
+7. Klicka på **Run workflow** för att starta deploymenten.
+
+Flödet är:
+
+```text
+GitHub repository
+       │
+       ▼
+    Actions
+       │
+       ▼
+Production workflow
+       │
+       ▼
+ Run workflow
+       │
+       ▼
+Välj tidigare image
+       │
+       ▼
+Production deployment
+       │
+       ▼
+Tidigare fungerande version
+```
+
+När workflowet har startats kan deploymenten följas under **Actions**. Där visas de olika jobben och resultatet från varje steg.
+
+**2. Manuell rollback via Railway** (Produktion och Staging)
+
+En rollback kan även göras direkt i Railway genom att välja en tidigare deployment och deploya den igen.
+
+Detta kan användas både i **staging och production**. Det är framför allt användbart som en snabb återställningsmekanism om en deployment orsakar problem.
+
+I staging bör en rollback normalt ses som en tillfällig återställning. Om problemet beror på en bug i den nya versionen är det oftast bättre att skapa en ny branch som innehåller en fix, bygga en ny Docker-image och därefter testa den nya imagen i staging.
+
+Exempel:
+
+```text
+Problem upptäcks
+       │
+       ▼
+Rollback till fungerande image
+       │
+       ▼
+Staging fungerar igen
+       │
+       ▼
+Skapa fix
+       │
+       ▼
+Bygg ny Docker-image
+       │
+       ▼
+Testa i staging
+       │
+       ▼
+Deploy till production
+```
+
+**3. Automatisk rollback vid misslyckad deployment** (Production och Staging)
+
+Om en deployment misslyckas kan Railway automatiskt försöka återställa den senast fungerande versionen.
+
+Detta kan användas både i **staging och production** för att snabbt återställa tjänsten till en fungerande version.
+
+Flödet är:
+
+```text
+Deployment
+     │
+     ▼
+Deployment fails
+     │
+     ▼
+Automatic rollback
+     │
+     ▼
+Previous working image
+```
+
+Även här bör rollback betraktas som en återställningsmekanism och inte som en permanent lösning på ett kodfel. Om problemet orsakas av en bug är det normalt bättre att skapa en ny ändring som försöker lösa problemet, bygga en ny Docker-image och verifiera den i staging innan den deployas till production.
+
+### Val av rollback-metod
+
+| Metod               | Användning                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `workflow_dispatch` | Rekommenderad metod för kontrollerad rollback till en specifik version i production |
+| Railway             | Snabb manuell rollback i staging eller production                                   |
+| Automatisk rollback | Snabb återställning i staging eller production när en deployment misslyckas         |
+
+Rollback ska återanvända en tidigare byggd och verifierad Docker-image. Imagen ska inte byggas om vid själva rollbacken.
+
+Om rollbacken görs på grund av ett identifierat fel i koden bör problemet därefter åtgärdas genom en ny branch och en ny Docker-image. Den nya imagen ska testas i staging innan den används i production.
+
+Detta följer projektets princip **build once, deploy multiple times** och säkerställer att en rollback återställer exakt den image som tidigare har verifierats.
+
+
 ## Docker image-taggar
 
 Docker images publiceras till **GitHub Container Registry (GHCR)** och identifieras med följande tags och identifierare:
