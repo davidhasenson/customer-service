@@ -14,7 +14,7 @@ on:
       image_tag:
         description: 'Ange image-tagg/SHA att deploya (t.ex. v1.0.0, latest eller a1b2c3d)'
         required: false
-        default: ''
+        default: 'latest'
         type: string
 #      skip_build:
 #        description: 'Hoppa över bygg & push (kör endast deploy)'
