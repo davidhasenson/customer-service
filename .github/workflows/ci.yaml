@@ -183,8 +183,8 @@ jobs:
 
           echo "Hämtar image med tagg: $CHOSEN_TAG"
 
-          SOURCE_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$CHOSEN_TAG"
-          ORIGINAL_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
+          ORIGINAL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$CHOSEN_TAG"
+          PROD_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
 
           docker pull $ORIGINAL_IMAGE
 
