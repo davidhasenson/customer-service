@@ -165,10 +165,10 @@ jobs:
 # -------------------------------------------------------------
   deploy-production:
     needs: push-to-container-registry
-    if: | 
-      !failure() && 
-      !cancelled() && 
-       github.event_name == 'workflow_dispatch'
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      !failure() &&
+      !cancelled()
     runs-on: ubuntu-latest
     environment: production
 
