@@ -170,7 +170,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
           DOCKER_IMAGE: ghcr.io/davidhasenson/customer-service
         run: |
-          railway api 'mutation UpdateService($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId environmentId: $environmentId input: $input) }' --variables '{"serviceId": "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}","input":{"source":{"image":"${{ env.DOCKER_IMAGE }}:${{ github.sha }}"}}}'
+          railway api 'mutation UpdateService($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId environmentId: $environmentId input: $input) }' --variables '{"serviceId": "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}","environmentId":"${{ secrets.RAILWAY_ENVIRONMENT_ID_STAGING }}","input":{"source":{"image":"${{ env.DOCKER_IMAGE }}@${{ steps.build.outputs.digest }}"}}}'
 
       - name: Deploy to staging
         env:
