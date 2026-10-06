@@ -10,8 +10,8 @@ Del av ett mikrotjänstsystem (3 tjänster totalt) för ett bokningssystem. Den 
 
 | Miljö | URL | Health check |
 |---|---|---|
-| Production | https://customer-service-production-1ad5.up.railway.app | [/actuator/health](https://customer-service-production-1ad5.up.railway.app/actuator/health) |
-| Staging | https://customer-service-staging-3344.up.railway.app | [/actuator/health](https://customer-service-staging-3344.up.railway.app/actuator/health) |
+| Production | https://customer-production-0f67.up.railway.app | [/actuator/health](https://https://customer-production-0f67.up.railway.app/actuator/health) |
+| Staging | https://customer-service-staging-6676.up.railway.app | [/actuator/health](https://customer-service-staging-6676.up.railway.app/actuator/health) |
 
 ## Vad tjänsten gör
 
