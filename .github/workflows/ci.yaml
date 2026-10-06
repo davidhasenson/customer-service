@@ -155,7 +155,7 @@ jobs:
           docker push ${STAGING_IMAGE}:latest
 
       - name: Deployment to railway
-        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
+        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID_STAGING }}" --yes
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
 
@@ -193,9 +193,9 @@ jobs:
           docker push ${PROD_IMAGE}:latest
 
       - name: Deployment to railway
-        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID }}" --yes
+        run: npx -y @railway/cli@latest redeploy --service "${{ secrets.RAILWAY_SERVICE_ID_PRODUCTION }}" --yes
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
 
 
 
