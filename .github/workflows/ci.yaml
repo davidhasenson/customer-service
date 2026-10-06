@@ -49,7 +49,7 @@ jobs:
         ports:
           - 3306:3306
         options:
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-cmd="mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -107,6 +107,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
+            type=raw,value=${{ github.sha }}
             type=sha,format=short
             type=ref,event=branch
             type=ref,event=tag
@@ -179,16 +180,16 @@ jobs:
       - name: Push image to Production GHCR Repository
         run: |
           CHOSEN_TAG="${{ inputs.image_tag }}"
-          
+
           echo "Hämtar image med tagg: $CHOSEN_TAG"
-          
+
           SOURCE_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$CHOSEN_TAG"
           PROD_IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/customer-service-production"
-          
+
           docker pull $ORIGINAL_IMAGE
-          
+
           docker tag $ORIGINAL_IMAGE ${PROD_IMAGE}:latest
-          
+
           docker push ${PROD_IMAGE}:latest
 
       - name: Deployment to railway
