@@ -13,7 +13,7 @@ on:
     inputs:
       image_tag:
         description: 'Ange image-tagg/SHA att deploya (t.ex. v1.0.0, latest eller a1b2c3d)'
-        required: false
+        required: true
         default: 'latest'
         type: string
 #      skip_build:
