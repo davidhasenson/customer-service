@@ -366,16 +366,16 @@ Tjänsten deployas till **Railway** i två separata miljöer:
 - **Staging** – automatisk miljö för verifiering och integrationstestning vid varje godkänd ändring i `master`.
 - **Production** – den skarpa miljön där tjänsten körs för användare.
 
-Pipeline-strukturen bygger på principen **Build once, deploy multiple times**. En Docker-image byggs och publiceras en gång till **GitHub Container Registry (GHCR)**. Samma exakta image (identifierad via sitt **image digest**) deployas sedan till både Staging och Production på Railway. Miljöerna skiljer sig enbart åt genom sina miljövariabler (`RAILWAY_STAGING_TOKEN` vs `RAILWAY_PRODUCTION_TOKEN`, databaslänkar osv.).
+Pipeline-strukturen bygger på principen **Build once, deploy multiple times**. En Docker-image byggs och publiceras en gång till **GitHub Container Registry (GHCR)**. Samma exakta image (identifierad via en **tag**) deployas sedan till både Staging och Production på Railway. Miljöerna skiljer sig enbart åt genom sina miljövariabler (`RAILWAY_STAGING_TOKEN` vs `RAILWAY_PRODUCTION_TOKEN`, databaslänkar osv.).
 
 ### Pipeline-jobb (Separation of Concerns)
 
 Workflowet i GitHub Actions är uppdelat i fyra fristående och modulariserade jobb:
 
 - `build-and-test`: Sätter upp Java, startar en MySQL-servicecontainer, bygger applikationen med Maven och kör alla testerna.
-- `push-to-container-registry`: Körs endast vid push/merge (ej vid PR). Bygger Docker-imagen, taggar den via `docker/metadata-action` och pushar den till GHCR. Jobbet genererar och skickar vidare ett unikt `image_digest.
-- `deploy-staging`: Körs automatiskt vid push till `master`. Installerar Railway CLI och deployar imagen via `image_digest` till Staging-miljön på Railway.
-- `deploy-production`: Körs manuellt via `workflow_dispatch` eller automatiskt vid skapande av en Git-tagg (`v*.*.*`). Deployar samma `image_digest` till Production-miljön på Railway.
+- `push-to-container-registry`: Körs endast vid push/merge (ej vid PR). Bygger Docker-imagen, taggar den via `docker/metadata-action` och pushar den till GHCR.
+- `deploy-staging`: Körs automatiskt vid push till `master`. Den installerar Railway CLI som deployar imagen till Staging-miljön på Railway.
+- `deploy-production`: Körs manuellt via `workflow_dispatch`. Identifierar en image via den `tag` som anges och deployar dem till Production-miljön på Railway.
 
 ### Översiktsdiagram över deploymentflödet
 
@@ -450,29 +450,16 @@ Så fort bilden finns i GHCR startar jobbet `deploy-staging`:
 
 - Railway CLI installeras på runnern.
 - Ett **Service Token** (`RAILWAY_STAGING_TOKEN`) används för autentisering.
-- Kommandot `railway deploy` pekar ut tjänsten `customer-service` och laddar in bilden direkt via dess digest:
-
-```bash
-railway deploy \
-  --service customer-service \
-  --image ghcr.io//@sha256:...
-```
+- Ett kommando körs som pekar om railway till den nya imagen.
+- Ett till kommando körs som får railway att använda den nya imagen.
 
 #### 4. Deployment till production
 
-När ändringen är verifierad i Staging deployas bilden till Production via antingen en Git-tagg eller en manuell körning i GitHub Actions:
+När ändringen är verifierad i Staging deployas bilden till Production via en manuell körning av workflow i GitHub Actions:
 
 Deployment till production sker via en explicit release-trigger:
 
-* **Manuell trigger** med `workflow_dispatch`. Välj workflowet i GitHub Actions och klicka på **Run workflow**.
-* **Git-tag** som representerar en release.
-
-Exempel:
-
-```bash
-git tag v1.2.0
-git push origin v1.2.0
-```
+* **Manuell trigger** med `workflow_dispatch`. Välj tag i GitHub Actions och klicka på **Run workflow**.
 
 Production-miljön på Railway uppdateras med exakt samma image_digest som staging via RAILWAY_PRODUCTION_TOKEN.
 
