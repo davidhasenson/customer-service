@@ -421,8 +421,6 @@ Workflowet i GitHub Actions är uppdelat i fyra fristående och modulariserade j
 ┌──────────────────────────────────┐
 │ Release trigger                  │
 │  - workflow_dispatch (manuell)   │
-│    eller                         │
-│  - Git-tag (v*.*.*)              │
 └────────┬─────────────────────────┘
          │
          ▼
@@ -451,29 +449,27 @@ Så fort bilden finns i GHCR startar jobbet `deploy-staging`:
 - Railway CLI installeras på runnern.
 - Ett **Service Token** (`RAILWAY_STAGING_TOKEN`) används för autentisering.
 - Ett kommando körs som pekar om railway till den nya imagen.
-- Ett till kommando körs som får railway att använda den nya imagen.
+- Ett kommando till körs som får railway att använda den nya imagen.
 
 #### 4. Deployment till production
 
-När ändringen är verifierad i Staging deployas bilden till Production via en manuell körning av workflow i GitHub Actions:
+När ändringen är verifierad i Staging deployas bilden till Production via en manuell körning av `workflow_dispatch` i GitHub Actions.
 
-Deployment till production sker via en explicit release-trigger:
+Deployment till production sker via en explicit release-trigger med `workflow_dispatch`. Välj **tag** från en image du vill använda i **GHCR** och klicka på **Run workflow**.
 
-* **Manuell trigger** med `workflow_dispatch`. Välj tag i GitHub Actions och klicka på **Run workflow**.
-
-Production-miljön på Railway uppdateras med exakt samma image_digest som staging via RAILWAY_PRODUCTION_TOKEN.
+Production-miljön på Railway uppdateras med den image som valdes.
 
 ## Rollback
 
 Om en release i production orsakar problem kan tjänsten återställas till en tidigare fungerande version. Rollback innebär att en tidigare verifierad Docker-image deployas igen.
 
-Eftersom Docker-images identifieras med image digest kan vi återgå till exakt samma image som tidigare kördes i production. Ingen ny image behöver byggas.
+Eftersom Docker-images identifieras med **tag** kan vi återgå till exakt samma image som tidigare kördes i production. Ingen ny image behöver byggas.
 
 Rollback kan göras på tre sätt:
 
 **1. Manuell rollback via `workflow_dispatch`** (Produktion)
 
-För produktionsmiljön kan en tidigare image väljas genom att starta production-workflowet manuellt med den tagg eller version som ska återställas.
+För produktionsmiljön kan en tidigare image väljas genom att starta `workflow_dispatch` manuellt med den **tag** som ska återställas.
 
 **Så startar du ett workflow manuellt i GitHub:**
 
@@ -588,7 +584,6 @@ Docker images publiceras till **GitHub Container Registry (GHCR)** och identifie
 ```text
 ghcr.io/<organisation>/<repository>:build142
 ghcr.io/<organisation>/<repository>:sha-8f3a21c
-ghcr.io/<organisation>/<repository>:v1.1.1
 ghcr.io/<organisation>/<repository>:latest
 ghcr.io/<organisation>/<repository>@sha256:abc123...
 ```
@@ -597,7 +592,6 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 | ------------------- | ----------------------------------------- |
 | `sha-8f3a21c`       | Commit SHA som imagen byggdes från        |
 | `latest`            | Huvudgrenen som imagen har byggts ifrån   |
-| `v1.1.1`            | Semantisk releaseversion                  |
 | `latest`            | Senaste publicerade image                 |
 | `@sha256:...`       | Image digest som identifierar exakt image |
 
@@ -612,20 +606,6 @@ sha-8f3a21c
 ```
 
 Det gör det möjligt att spåra exakt vilken kodversion som finns i en Docker-image.
-
-### Release version
-
-En semantisk releaseversion, exempelvis `v1.1.1`, används för att identifiera en officiell release av applikationen.
-
-Exempel:
-
-```text
-v1.2.0
-```
-
-En releaseversion bör behandlas som **immutable**, vilket innebär att samma release-tag inte ska flyttas till en annanimage efter att releasen har skapats.
-
-En releaseversion kan läggas till på en redan skapad image utan att imagen behöver byggas om.
 
 ### Latest & Branch-tags (`master`, `latest`)
 
@@ -655,61 +635,56 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 ```
 
 Det gör det möjligt att säkerställa att exakt samma Docker-image används vid deployment till Staging och Production. 
-Till skillnad från en tagg som `latest` och `maste` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digestet.
+Till skillnad från en tagg som `latest` och `maste` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digest.
 
 ### Deployment
 
-Vid deployment används alltid **image digest** för att identifiera vilken Docker-image som ska deployas:
+Vid deployment används lämplig **tag** för att identifiera vilken Docker-image som ska deployas:
 
 ```text
-ghcr.io/<organisation>/<repository>@sha256:abc123...
+ghcr.io/<organisation>/<repository>:sha-8f3a21c
 ```
 
 Samma image används sedan i både staging och production.
 
 ```text
-                    GHCR
-                      │
-         ┌────────────┼────────────┼────────────┐
-         │            │            │            │
-         ▼            ▼            ▼            ▼
- @sha256:abc123... :sha-8f3a21c  :master      :latest
-         │            │            │            │
-         │            │            │            └── Latest image
-         │            │            │
-         │            │            └── Branch tag
-         │            │
-         │            └── Commit SHA
-         │
-         └── Image digest (Immutable)
-         │
-         ▼
-      Staging
-         │
-         │ Verification
-         ▼
-    Release trigger
-         │
-         └── Tag: v1.2.0
-         │
-         ▼
-     Production
-         │
-         └── Deployment: @sha256:abc123...
-
-          
+                GHCR
+                  │
+     ┌────────────┼────────────┐
+     │            │            │
+     ▼            ▼            ▼
+:sha-8f3a21c    :master      :latest
+     │            │            │
+     │            │            └── Latest image
+     │            │
+     │            └── Branch tag
+     │
+     └── Commit SHA
+     │
+     ▼
+  Staging
+     │
+     │ Verification
+     ▼
+Release trigger
+     │
+     └── Tag: :sha-8f3a21c
+     │
+     ▼
+ Production
+     │
+     └── Deployment: :sha-8f3a21c      
 ```
 
 På så sätt kan samma Docker-image verifieras i staging och därefter deployas till production utan att imagen behöver byggas om. Image digest används alltid som deployment-referens.
 
-Docker-tags kan fortfarande användas för att söka och identifiera images i GHCR. Följande identifierare kan alltså peka på en och samma image:
+Docker-tags kan fortfarande användas för att söka och identifiera images i GHCR. Följande identifierare **kan** alltså peka på en och samma image:
 
 ```text
 :sha-8f3a21c
 :master
-:v1.2.0
 :latest
 @sha256:abc123...
 ```
 
-Där sha-8f3a21c identifierar committen, master är källgrenen, v1.2.0 är releaseversionen, latest pekar på den senast publicerade imagen och @sha256:abc123... identifierar exakt image-innehåll och används vid faktiska deployments.
+Där sha-8f3a21c identifierar committen, master är källgrenen, latest pekar på den senast publicerade imagen och @sha256:abc123... är image digest som identifierar exakt image.
