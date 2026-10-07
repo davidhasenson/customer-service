@@ -118,9 +118,9 @@ Systemet innehåller även `review-service` (recensioner, port 8082), som bara b
 
 ### Syfte
 
-Projektet använder GitHub Flow som arbetsflöde för versionshantering och samarbete. Målet är att säkerställa att alla ändringar kan granskas och testas innan de integreras i `main`.
+Projektet använder GitHub Flow som arbetsflöde för versionshantering och samarbete. Målet är att säkerställa att alla ändringar kan granskas och testas innan de integreras i `master`.
 
-Direkta commits till `main` ska undvikas. All utveckling sker i separata branches och integreras genom Pull Requests.
+Direkta commits till `master` ska undvikas. All utveckling sker i separata branches och integreras genom Pull Requests.
 
 ### Motivering till val av branch-strategi
 
@@ -130,13 +130,13 @@ Vi har valt **GitHub Flow** som branch-strategi för detta projekt, framför alt
 Gruppens medlemmar har sedan tidigare kurser (bl.a. Backend 1 och Backend 2) mer eller mindre redan arbetat enligt principerna i GitHub Flow, utan att uttryckligen ha namngett eller definierat det som en formell strategi. Att fortsätta med samma grundläggande arbetssätt, nu med tydligare struktur och namngivningsstandard, gjorde övergången enkel och naturlig för hela gruppen.
 
 **Liten grupp och kort projekttid**
-Vi är tre utvecklare som arbetar tillsammans under en begränsad tidsperiod. GitHub Flow är enkelt att förstå och kräver inte lika mycket administration som Git Flow, som normalt innehåller flera permanenta branches (t.ex. `develop`, `release`, `hotfix`) utöver `main`. För ett projekt av vår storlek skulle den extra komplexiteten inte ge något mervärde, utan bara öka risken för missförstånd i gruppen.
+Vi är tre utvecklare som arbetar tillsammans under en begränsad tidsperiod. GitHub Flow är enkelt att förstå och kräver inte lika mycket administration som Git Flow, som normalt innehåller flera permanenta branches (t.ex. `develop`, `release`, `hotfix`) utöver `master`. För ett projekt av vår storlek skulle den extra komplexiteten inte ge något mervärde, utan bara öka risken för missförstånd i gruppen.
 
 **Kontinuerlig leverans till staging och production**
-Vårt deploymentflöde bygger på att samma Docker-image ska kunna verifieras i staging och sedan släppas till production (build once, deploy multiple times). GitHub Flow passar naturligt ihop med detta arbetssätt, eftersom varje merge till `main` automatiskt kan triggra en ny build och deployment till staging, utan att behöva vänta på en separat release-branch.
+Vårt deploymentflöde bygger på att samma Docker-image ska kunna verifieras i staging och sedan släppas till production (build once, deploy multiple times). GitHub Flow passar naturligt ihop med detta arbetssätt, eftersom varje merge till `master` automatiskt kan triggra en ny build och deployment till staging, utan att behöva vänta på en separat release-branch.
 
 **Enkel spårbarhet**
-Med en enda långlivad branch (`main`) och korta feature-branches blir det tydligt vilken kod som är aktuell. Alla ändringar går via review och Pull Requests, vilket säkerställer kodgranskning och att CI-kontroller körs innan något når `main`.
+Med en enda långlivad branch (`master`) och korta feature-branches blir det tydligt vilken kod som är aktuell. Alla ändringar går via review och Pull Requests, vilket säkerställer kodgranskning och att CI-kontroller körs innan något når `master`.
 
 **Snabb feedback**
 Eftersom branches är kortlivade och mergas in ofta, minskar risken för stora och svårlösta merge-konflikter jämfört med om utveckling hade skett i långlivade parallella branches under en längre tid.
@@ -171,9 +171,9 @@ Done
 
 **In Progress** används när arbetet med ticketen har påbörjats och en branch har skapats.
 
-**In Review** används när implementationen är klar och en Pull Request har skapats mot `main`. Ticketen stannar här under code review, automatiska tester och eventuell komplettering.
+**In Review** används när implementationen är klar och en Pull Request har skapats mot `master`. Ticketen stannar här under code review, automatiska tester och eventuell komplettering.
 
-**Done** används när Pull Requesten är godkänd, mergad till `main` och arbetet är färdigställt.
+**Done** används när Pull Requesten är godkänd, mergad till `master` och arbetet är färdigställt.
 
 Kopplingen mellan Kanban-tavlan och GitHub Flow kan illustreras så här:
 
@@ -199,17 +199,17 @@ Done
    │
    │ Merge
    ▼
-main
+master
 ```
 
-På så sätt används GitHub Project för att följa statusen på arbetet, medan GitHub Flow hanterar hur ändringen utvecklas och integreras i `main`.
+På så sätt används GitHub Project för att följa statusen på arbetet, medan GitHub Flow hanterar hur ändringen utvecklas och integreras i `master`.
 
 ### Utvecklingsflöde
 
 Utveckling följer normalt detta flöde:
 
 ```text
-main
+master
  │
  ├── Create branch
  │
@@ -228,33 +228,33 @@ Pull Request
  └── Validation
  │
  ▼
-main
+master
  │
  └── Merge
 ```
 
-Direkta commits till `main` är inte tillåtna. All förändring ska gå via en Pull Request.
+Direkta commits till `master` är inte tillåtna. All förändring ska gå via en Pull Request.
 
 ### Skyddad huvudbranch
 
-Huvudbranchen (`master` i detta repo, motsvarar `main` i texten ovan) är skyddad med branch protection:
+Huvudbranchen (`master` i detta repo, motsvarar `master` i texten ovan) är skyddad med branch protection:
 
 * Pull Request krävs, ingen kan pusha direkt.
 * Minst 1 godkännande från en annan gruppmedlem.
 * CI måste vara grön innan merge.
 
-**1. Synkronisera med `main`**
+**1. Synkronisera med `master`**
 
 Hämta den senaste versionen innan en ny branch skapas.
 
 ```bash
-git switch main
-git pull origin main
+git switch master
+git pull origin master
 ```
 
 **2. Skapa en branch**
 
-Skapa en branch från den senaste versionen av `main` med ett namn som följer projektets namngivningsstandard.
+Skapa en branch från den senaste versionen av `master` med ett namn som följer projektets namngivningsstandard.
 
 ```bash
 git switch -c docs/112-update-readme-with-workflow-description
@@ -279,7 +279,7 @@ git push -u origin docs/112-update-readme-with-workflow-description
 
 **5. Skapa en Pull Request**
 
-Skapa en Pull Request från branchen mot `main`.
+Skapa en Pull Request från branchen mot `master`.
 
 Pull Requesten ska normalt innehålla:
 
@@ -302,7 +302,7 @@ Innan mergning ska ändringarna granskas av en annan utvecklare. Relevanta teste
 
 **7. Merge och städning**
 
-När Pull Requesten är godkänd mergas den till `main`. Branchen kan därefter tas bort.
+När Pull Requesten är godkänd mergas den till `master`. Branchen kan därefter tas bort.
 
 ### Branch-namngivning
 
@@ -635,7 +635,7 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 ```
 
 Det gör det möjligt att säkerställa att exakt samma Docker-image används vid deployment till Staging och Production. 
-Till skillnad från en tagg som `latest` och `maste` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digest.
+Till skillnad från en tagg som `latest` och `master` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digest.
 
 ### Deployment
 
@@ -676,7 +676,7 @@ Release trigger
      └── Deployment: :sha-8f3a21c      
 ```
 
-På så sätt kan samma Docker-image verifieras i staging och därefter deployas till production utan att imagen behöver byggas om. Image digest används alltid som deployment-referens.
+På så sätt kan samma Docker-image verifieras i staging och därefter deployas till production utan att imagen behöver byggas om.
 
 Docker-tags kan fortfarande användas för att söka och identifiera images i GHCR. Följande identifierare **kan** alltså peka på en och samma image:
 
