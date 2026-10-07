@@ -118,9 +118,9 @@ Systemet innehåller även `review-service` (recensioner, port 8082), som bara b
 
 ### Syfte
 
-Projektet använder GitHub Flow som arbetsflöde för versionshantering och samarbete. Målet är att säkerställa att alla ändringar kan granskas och testas innan de integreras i `main`.
+Projektet använder GitHub Flow som arbetsflöde för versionshantering och samarbete. Målet är att säkerställa att alla ändringar kan granskas och testas innan de integreras i `master`.
 
-Direkta commits till `main` ska undvikas. All utveckling sker i separata branches och integreras genom Pull Requests.
+Direkta commits till `master` ska undvikas. All utveckling sker i separata branches och integreras genom Pull Requests.
 
 ### Motivering till val av branch-strategi
 
@@ -130,13 +130,13 @@ Vi har valt **GitHub Flow** som branch-strategi för detta projekt, framför alt
 Gruppens medlemmar har sedan tidigare kurser (bl.a. Backend 1 och Backend 2) mer eller mindre redan arbetat enligt principerna i GitHub Flow, utan att uttryckligen ha namngett eller definierat det som en formell strategi. Att fortsätta med samma grundläggande arbetssätt, nu med tydligare struktur och namngivningsstandard, gjorde övergången enkel och naturlig för hela gruppen.
 
 **Liten grupp och kort projekttid**
-Vi är tre utvecklare som arbetar tillsammans under en begränsad tidsperiod. GitHub Flow är enkelt att förstå och kräver inte lika mycket administration som Git Flow, som normalt innehåller flera permanenta branches (t.ex. `develop`, `release`, `hotfix`) utöver `main`. För ett projekt av vår storlek skulle den extra komplexiteten inte ge något mervärde, utan bara öka risken för missförstånd i gruppen.
+Vi är tre utvecklare som arbetar tillsammans under en begränsad tidsperiod. GitHub Flow är enkelt att förstå och kräver inte lika mycket administration som Git Flow, som normalt innehåller flera permanenta branches (t.ex. `develop`, `release`, `hotfix`) utöver `master`. För ett projekt av vår storlek skulle den extra komplexiteten inte ge något mervärde, utan bara öka risken för missförstånd i gruppen.
 
 **Kontinuerlig leverans till staging och production**
-Vårt deploymentflöde bygger på att samma Docker-image ska kunna verifieras i staging och sedan släppas till production (build once, deploy multiple times). GitHub Flow passar naturligt ihop med detta arbetssätt, eftersom varje merge till `main` automatiskt kan triggra en ny build och deployment till staging, utan att behöva vänta på en separat release-branch.
+Vårt deploymentflöde bygger på att samma Docker-image ska kunna verifieras i staging och sedan släppas till production (build once, deploy multiple times). GitHub Flow passar naturligt ihop med detta arbetssätt, eftersom varje merge till `master` automatiskt kan triggra en ny build och deployment till staging, utan att behöva vänta på en separat release-branch.
 
 **Enkel spårbarhet**
-Med en enda långlivad branch (`main`) och korta feature-branches blir det tydligt vilken kod som är aktuell. Alla ändringar går via review och Pull Requests, vilket säkerställer kodgranskning och att CI-kontroller körs innan något når `main`.
+Med en enda långlivad branch (`master`) och korta feature-branches blir det tydligt vilken kod som är aktuell. Alla ändringar går via review och Pull Requests, vilket säkerställer kodgranskning och att CI-kontroller körs innan något når `master`.
 
 **Snabb feedback**
 Eftersom branches är kortlivade och mergas in ofta, minskar risken för stora och svårlösta merge-konflikter jämfört med om utveckling hade skett i långlivade parallella branches under en längre tid.
@@ -171,9 +171,9 @@ Done
 
 **In Progress** används när arbetet med ticketen har påbörjats och en branch har skapats.
 
-**In Review** används när implementationen är klar och en Pull Request har skapats mot `main`. Ticketen stannar här under code review, automatiska tester och eventuell komplettering.
+**In Review** används när implementationen är klar och en Pull Request har skapats mot `master`. Ticketen stannar här under code review, automatiska tester och eventuell komplettering.
 
-**Done** används när Pull Requesten är godkänd, mergad till `main` och arbetet är färdigställt.
+**Done** används när Pull Requesten är godkänd, mergad till `master` och arbetet är färdigställt.
 
 Kopplingen mellan Kanban-tavlan och GitHub Flow kan illustreras så här:
 
@@ -199,17 +199,17 @@ Done
    │
    │ Merge
    ▼
-main
+master
 ```
 
-På så sätt används GitHub Project för att följa statusen på arbetet, medan GitHub Flow hanterar hur ändringen utvecklas och integreras i `main`.
+På så sätt används GitHub Project för att följa statusen på arbetet, medan GitHub Flow hanterar hur ändringen utvecklas och integreras i `master`.
 
 ### Utvecklingsflöde
 
 Utveckling följer normalt detta flöde:
 
 ```text
-main
+master
  │
  ├── Create branch
  │
@@ -228,33 +228,33 @@ Pull Request
  └── Validation
  │
  ▼
-main
+master
  │
  └── Merge
 ```
 
-Direkta commits till `main` är inte tillåtna. All förändring ska gå via en Pull Request.
+Direkta commits till `master` är inte tillåtna. All förändring ska gå via en Pull Request.
 
 ### Skyddad huvudbranch
 
-Huvudbranchen (`master` i detta repo, motsvarar `main` i texten ovan) är skyddad med branch protection:
+Huvudbranchen (`master` i detta repo, motsvarar `master` i texten ovan) är skyddad med branch protection:
 
 * Pull Request krävs, ingen kan pusha direkt.
 * Minst 1 godkännande från en annan gruppmedlem.
 * CI måste vara grön innan merge.
 
-**1. Synkronisera med `main`**
+**1. Synkronisera med `master`**
 
 Hämta den senaste versionen innan en ny branch skapas.
 
 ```bash
-git switch main
-git pull origin main
+git switch master
+git pull origin master
 ```
 
 **2. Skapa en branch**
 
-Skapa en branch från den senaste versionen av `main` med ett namn som följer projektets namngivningsstandard.
+Skapa en branch från den senaste versionen av `master` med ett namn som följer projektets namngivningsstandard.
 
 ```bash
 git switch -c docs/112-update-readme-with-workflow-description
@@ -279,7 +279,7 @@ git push -u origin docs/112-update-readme-with-workflow-description
 
 **5. Skapa en Pull Request**
 
-Skapa en Pull Request från branchen mot `main`.
+Skapa en Pull Request från branchen mot `master`.
 
 Pull Requesten ska normalt innehålla:
 
@@ -302,7 +302,7 @@ Innan mergning ska ändringarna granskas av en annan utvecklare. Relevanta teste
 
 **7. Merge och städning**
 
-När Pull Requesten är godkänd mergas den till `main`. Branchen kan därefter tas bort.
+När Pull Requesten är godkänd mergas den till `master`. Branchen kan därefter tas bort.
 
 ### Branch-namngivning
 
@@ -366,16 +366,16 @@ Tjänsten deployas till **Railway** i två separata miljöer:
 - **Staging** – automatisk miljö för verifiering och integrationstestning vid varje godkänd ändring i `master`.
 - **Production** – den skarpa miljön där tjänsten körs för användare.
 
-Pipeline-strukturen bygger på principen **Build once, deploy multiple times**. En Docker-image byggs och publiceras en gång till **GitHub Container Registry (GHCR)**. Samma exakta image (identifierad via sitt **image digest**) deployas sedan till både Staging och Production på Railway. Miljöerna skiljer sig enbart åt genom sina miljövariabler (`RAILWAY_STAGING_TOKEN` vs `RAILWAY_PRODUCTION_TOKEN`, databaslänkar osv.).
+Pipeline-strukturen bygger på principen **Build once, deploy multiple times**. En Docker-image byggs och publiceras en gång till **GitHub Container Registry (GHCR)**. Samma exakta image (identifierad via en **tag**) deployas sedan till både Staging och Production på Railway. Miljöerna skiljer sig enbart åt genom sina miljövariabler (`RAILWAY_STAGING_TOKEN` vs `RAILWAY_PRODUCTION_TOKEN`, databaslänkar osv.).
 
 ### Pipeline-jobb (Separation of Concerns)
 
 Workflowet i GitHub Actions är uppdelat i fyra fristående och modulariserade jobb:
 
 - `build-and-test`: Sätter upp Java, startar en MySQL-servicecontainer, bygger applikationen med Maven och kör alla testerna.
-- `push-to-container-registry`: Körs endast vid push/merge (ej vid PR). Bygger Docker-imagen, taggar den via `docker/metadata-action` och pushar den till GHCR. Jobbet genererar och skickar vidare ett unikt `image_digest.
-- `deploy-staging`: Körs automatiskt vid push till `master`. Installerar Railway CLI och deployar imagen via `image_digest` till Staging-miljön på Railway.
-- `deploy-production`: Körs manuellt via `workflow_dispatch` eller automatiskt vid skapande av en Git-tagg (`v*.*.*`). Deployar samma `image_digest` till Production-miljön på Railway.
+- `push-to-container-registry`: Körs endast vid push/merge (ej vid PR). Bygger Docker-imagen, taggar den via `docker/metadata-action` och pushar den till GHCR.
+- `deploy-staging`: Körs automatiskt vid push till `master`. Den installerar Railway CLI som deployar imagen till Staging-miljön på Railway.
+- `deploy-production`: Körs manuellt via `workflow_dispatch`. Identifierar en image via den `tag` som anges och deployar dem till Production-miljön på Railway.
 
 ### Översiktsdiagram över deploymentflödet
 
@@ -421,8 +421,6 @@ Workflowet i GitHub Actions är uppdelat i fyra fristående och modulariserade j
 ┌──────────────────────────────────┐
 │ Release trigger                  │
 │  - workflow_dispatch (manuell)   │
-│    eller                         │
-│  - Git-tag (v*.*.*)              │
 └────────┬─────────────────────────┘
          │
          ▼
@@ -450,43 +448,28 @@ Så fort bilden finns i GHCR startar jobbet `deploy-staging`:
 
 - Railway CLI installeras på runnern.
 - Ett **Service Token** (`RAILWAY_STAGING_TOKEN`) används för autentisering.
-- Kommandot `railway deploy` pekar ut tjänsten `customer-service` och laddar in bilden direkt via dess digest:
-
-```bash
-railway deploy \
-  --service customer-service \
-  --image ghcr.io//@sha256:...
-```
+- Ett kommando körs som pekar om railway till den nya imagen.
+- Ett kommando till körs som får railway att använda den nya imagen.
 
 #### 4. Deployment till production
 
-När ändringen är verifierad i Staging deployas bilden till Production via antingen en Git-tagg eller en manuell körning i GitHub Actions:
+När ändringen är verifierad i Staging deployas bilden till Production via en manuell körning av `workflow_dispatch` i GitHub Actions.
 
-Deployment till production sker via en explicit release-trigger:
+Deployment till production sker via en explicit release-trigger med `workflow_dispatch`. Välj **tag** från en image du vill använda i **GHCR** och klicka på **Run workflow**.
 
-* **Manuell trigger** med `workflow_dispatch`. Välj workflowet i GitHub Actions och klicka på **Run workflow**.
-* **Git-tag** som representerar en release.
-
-Exempel:
-
-```bash
-git tag v1.2.0
-git push origin v1.2.0
-```
-
-Production-miljön på Railway uppdateras med exakt samma image_digest som staging via RAILWAY_PRODUCTION_TOKEN.
+Production-miljön på Railway uppdateras med den image som valdes.
 
 ## Rollback
 
 Om en release i production orsakar problem kan tjänsten återställas till en tidigare fungerande version. Rollback innebär att en tidigare verifierad Docker-image deployas igen.
 
-Eftersom Docker-images identifieras med image digest kan vi återgå till exakt samma image som tidigare kördes i production. Ingen ny image behöver byggas.
+Eftersom Docker-images identifieras med **tag** kan vi återgå till exakt samma image som tidigare kördes i production. Ingen ny image behöver byggas.
 
 Rollback kan göras på tre sätt:
 
 **1. Manuell rollback via `workflow_dispatch`** (Produktion)
 
-För produktionsmiljön kan en tidigare image väljas genom att starta production-workflowet manuellt med den tagg eller version som ska återställas.
+För produktionsmiljön kan en tidigare image väljas genom att starta `workflow_dispatch` manuellt med den **tag** som ska återställas.
 
 **Så startar du ett workflow manuellt i GitHub:**
 
@@ -601,7 +584,6 @@ Docker images publiceras till **GitHub Container Registry (GHCR)** och identifie
 ```text
 ghcr.io/<organisation>/<repository>:build142
 ghcr.io/<organisation>/<repository>:sha-8f3a21c
-ghcr.io/<organisation>/<repository>:v1.1.1
 ghcr.io/<organisation>/<repository>:latest
 ghcr.io/<organisation>/<repository>@sha256:abc123...
 ```
@@ -610,7 +592,6 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 | ------------------- | ----------------------------------------- |
 | `sha-8f3a21c`       | Commit SHA som imagen byggdes från        |
 | `latest`            | Huvudgrenen som imagen har byggts ifrån   |
-| `v1.1.1`            | Semantisk releaseversion                  |
 | `latest`            | Senaste publicerade image                 |
 | `@sha256:...`       | Image digest som identifierar exakt image |
 
@@ -625,20 +606,6 @@ sha-8f3a21c
 ```
 
 Det gör det möjligt att spåra exakt vilken kodversion som finns i en Docker-image.
-
-### Release version
-
-En semantisk releaseversion, exempelvis `v1.1.1`, används för att identifiera en officiell release av applikationen.
-
-Exempel:
-
-```text
-v1.2.0
-```
-
-En releaseversion bör behandlas som **immutable**, vilket innebär att samma release-tag inte ska flyttas till en annanimage efter att releasen har skapats.
-
-En releaseversion kan läggas till på en redan skapad image utan att imagen behöver byggas om.
 
 ### Latest & Branch-tags (`master`, `latest`)
 
@@ -668,61 +635,56 @@ ghcr.io/<organisation>/<repository>@sha256:abc123...
 ```
 
 Det gör det möjligt att säkerställa att exakt samma Docker-image används vid deployment till Staging och Production. 
-Till skillnad från en tagg som `latest` och `maste` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digestet.
+Till skillnad från en tagg som `latest` och `master` pekar ett digest **alltid** på det specifika image-innehåll som identifierats av digest.
 
 ### Deployment
 
-Vid deployment används alltid **image digest** för att identifiera vilken Docker-image som ska deployas:
+Vid deployment används lämplig **tag** för att identifiera vilken Docker-image som ska deployas:
 
 ```text
-ghcr.io/<organisation>/<repository>@sha256:abc123...
+ghcr.io/<organisation>/<repository>:sha-8f3a21c
 ```
 
 Samma image används sedan i både staging och production.
 
 ```text
-                    GHCR
-                      │
-         ┌────────────┼────────────┼────────────┐
-         │            │            │            │
-         ▼            ▼            ▼            ▼
- @sha256:abc123... :sha-8f3a21c  :master      :latest
-         │            │            │            │
-         │            │            │            └── Latest image
-         │            │            │
-         │            │            └── Branch tag
-         │            │
-         │            └── Commit SHA
-         │
-         └── Image digest (Immutable)
-         │
-         ▼
-      Staging
-         │
-         │ Verification
-         ▼
-    Release trigger
-         │
-         └── Tag: v1.2.0
-         │
-         ▼
-     Production
-         │
-         └── Deployment: @sha256:abc123...
-
-          
+                GHCR
+                  │
+     ┌────────────┼────────────┐
+     │            │            │
+     ▼            ▼            ▼
+:sha-8f3a21c    :master      :latest
+     │            │            │
+     │            │            └── Latest image
+     │            │
+     │            └── Branch tag
+     │
+     └── Commit SHA
+     │
+     ▼
+  Staging
+     │
+     │ Verification
+     ▼
+Release trigger
+     │
+     └── Tag: :sha-8f3a21c
+     │
+     ▼
+ Production
+     │
+     └── Deployment: :sha-8f3a21c      
 ```
 
-På så sätt kan samma Docker-image verifieras i staging och därefter deployas till production utan att imagen behöver byggas om. Image digest används alltid som deployment-referens.
+På så sätt kan samma Docker-image verifieras i staging och därefter deployas till production utan att imagen behöver byggas om.
 
-Docker-tags kan fortfarande användas för att söka och identifiera images i GHCR. Följande identifierare kan alltså peka på en och samma image:
+Docker-tags kan fortfarande användas för att söka och identifiera images i GHCR. Följande identifierare **kan** alltså peka på en och samma image:
 
 ```text
 :sha-8f3a21c
 :master
-:v1.2.0
 :latest
 @sha256:abc123...
 ```
 
-Där sha-8f3a21c identifierar committen, master är källgrenen, v1.2.0 är releaseversionen, latest pekar på den senast publicerade imagen och @sha256:abc123... identifierar exakt image-innehåll och används vid faktiska deployments.
+Där sha-8f3a21c identifierar committen, master är källgrenen, latest pekar på den senast publicerade imagen och @sha256:abc123... är image digest som identifierar exakt image.
